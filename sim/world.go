@@ -2,29 +2,29 @@ package sim
 
 import "math"
 
-// Alle tall er gjetninger som skal justeres ved å spille. Enheter: piksler og sekunder.
+// All numbers are guesses meant to be tuned by playing. Units: pixels and seconds.
 const (
-	Dt = 1.0 / 60 // fast tidssteg; Ebitengine kjører Update 60 ganger i sekundet
+	Dt = 1.0 / 60 // fixed time step; Ebitengine runs Update 60 times per second
 
 	Gravity  = 120.0 // px/s²
-	Thrust   = 360.0 // kraft; akselerasjon = Thrust / masse
+	Thrust   = 360.0 // force; acceleration = Thrust / mass
 	TurnRate = 2.4   // rad/s
-	Drag     = 0.15  // lineær luftmotstand, 1/s
+	Drag     = 0.15  // linear air resistance, 1/s
 
-	BaseMass = 1.0 // tomt skip
-	FuelMass = 0.6 // ekstra masse ved full tank. Last = tregere akselerasjon.
+	BaseMass = 1.0 // empty ship
+	FuelMass = 0.6 // extra mass with a full tank. More load = slower acceleration.
 
-	BurnRate   = 0.03 // tank/s ved full thrust
-	RefuelRate = 0.25 // tank/s når du står på en plattform
+	BurnRate   = 0.03 // tank/s at full thrust
+	RefuelRate = 0.25 // tank/s while standing on a pad
 
-	// Landingskrav
+	// Landing limits
 	MaxLandVY    = 80.0 // px/s
 	MaxLandVX    = 50.0 // px/s
-	MaxLandAngle = 0.5  // rad fra rett opp
+	MaxLandAngle = 0.5  // rad from straight up
 
-	ShipRear = 9.0 // avstand fra skipets midtpunkt til bakkanten (lokal y)
+	ShipRear = 9.0 // distance from the ship's centre to its rear edge (local y)
 
-	CrystalRadius = 18.0 // krystallen er tatt når skipets midtpunkt er nærmere enn dette
+	CrystalRadius = 18.0 // a crystal is taken when the ship's centre is closer than this
 )
 
 type Input struct{ Left, Right, Thrust bool }
@@ -37,18 +37,18 @@ const (
 	Crashed
 )
 
-// Ship: Angle 0 = nesa peker rett opp, positiv vinkel = med klokka.
+// Ship: Angle 0 = nose points straight up, positive angle = clockwise.
 type Ship struct {
 	X, Y, VX, VY float64
 	Angle        float64
 	Fuel         float64 // 0..1
 	State        State
-	Thrusting    bool // sant hvis motoren gikk i dette tidssteget
+	Thrusting    bool // true if the engine fired this time step
 }
 
 func (s *Ship) Mass() float64 { return BaseMass + FuelMass*s.Fuel }
 
-// ToWorld gjør et lokalt skipspunkt (nese = (0,-12)) om til verdenskoordinater.
+// ToWorld converts a local ship point (nose = (0,-12)) to world coordinates.
 func (s *Ship) ToWorld(lx, ly float64) Pt {
 	sin, cos := math.Sincos(s.Angle)
 	return Pt{
@@ -59,7 +59,7 @@ func (s *Ship) ToWorld(lx, ly float64) Pt {
 
 var shipShape = [3]Pt{{0, -12}, {-8, ShipRear}, {8, ShipRear}}
 
-// Points gir de tre hjørnene (nese, venstre bak, høyre bak) i verdenskoordinater.
+// Points returns the three corners (nose, rear left, rear right) in world coordinates.
 func (s *Ship) Points() [3]Pt {
 	var out [3]Pt
 	for i, p := range shipShape {
@@ -68,7 +68,7 @@ func (s *Ship) Points() [3]Pt {
 	return out
 }
 
-// contactPoints: hjørner + midtpunkt på hver kant. Det er disse som testes mot terrenget.
+// contactPoints: corners + the midpoint of each edge. These are tested against the terrain.
 func (s *Ship) contactPoints() []Pt {
 	v := s.Points()
 	mid := func(a, b Pt) Pt { return Pt{(a.X + b.X) / 2, (a.Y + b.Y) / 2} }
@@ -79,10 +79,10 @@ type World struct {
 	Level *Level
 	Ship  Ship
 
-	// Spillstatus. Got har samme indeks som Level.Crystals.
+	// Game state. Got uses the same index as Level.Crystals.
 	Got     []bool
 	NGot    int
-	Time    float64 // sekunder siden første avgang (teller også mens du fyller på)
+	Time    float64 // seconds since first liftoff (keeps counting while refuelling)
 	Started bool
 	Won     bool
 }
@@ -99,7 +99,7 @@ func (w *World) Reset() {
 	w.NGot, w.Time, w.Started, w.Won = 0, 0, false, false
 }
 
-// Step flytter verden ett fast tidssteg (Dt).
+// Step advances the world by one fixed time step (Dt).
 func (w *World) Step(in Input) {
 	s := &w.Ship
 	s.Thrusting = false
@@ -113,7 +113,7 @@ func (w *World) Step(in Input) {
 
 	if s.State == Landed {
 		if in.Thrust && s.Fuel > 0 {
-			s.State = Flying // løfter fra bakken, fortsetter under
+			s.State = Flying // lifts off, continues below
 			w.Started = true
 		} else {
 			s.Fuel = min(1, s.Fuel+RefuelRate*Dt)
@@ -130,7 +130,7 @@ func (w *World) Step(in Input) {
 
 	ax, ay := 0.0, Gravity
 	if in.Thrust && s.Fuel > 0 {
-		a := Thrust / s.Mass() // masse regnes før drivstoffet brennes
+		a := Thrust / s.Mass() // mass is computed before the fuel is burned
 		sin, cos := math.Sincos(s.Angle)
 		ax += sin * a
 		ay -= cos * a
@@ -146,11 +146,11 @@ func (w *World) Step(in Input) {
 	s.X += s.VX * Dt
 	s.Y += s.VY * Dt
 
-	w.pickup() // før kollisjon, så siste krystall teller ved en landing i samme steg
+	w.pickup() // before collision, so the last crystal counts when landing in the same step
 	w.collide()
 }
 
-// pickup tar krystaller som skipets midtpunkt er innenfor rekkevidde av.
+// pickup takes crystals that the ship's centre is within reach of.
 func (w *World) pickup() {
 	s := &w.Ship
 	for i, c := range w.Level.Crystals {
@@ -177,9 +177,9 @@ func (w *World) collide() {
 	}
 	if pad, ok := w.padFor(hit); ok && s.gentle() {
 		s.VX, s.VY, s.Angle = 0, 0, 0
-		s.Y = pad.Y - ShipRear - 0.5 // bakkanten rett over plattformen
+		s.Y = pad.Y - ShipRear - 0.5 // rear edge just above the pad
 		s.State = Landed
-		// Vinn: alle krystaller tatt og landet på startplattformen (Pads[0]).
+		// Win: all crystals taken and landed on the start pad (Pads[0]).
 		if n := len(w.Level.Crystals); n > 0 && w.NGot == n && pad == w.Level.Pads[0] {
 			w.Won = true
 		}
@@ -189,8 +189,8 @@ func (w *World) collide() {
 	s.State = Crashed
 }
 
-// padFor: alle treffpunkter må ligge på toppen av samme plattform
-// (ikke dypt inni den, ikke utenfor kantene).
+// padFor: all hit points must be on top of the same pad
+// (not deep inside it, not beyond its edges).
 func (w *World) padFor(hit []Pt) (Pad, bool) {
 	for _, pad := range w.Level.Pads {
 		all := true
@@ -208,7 +208,7 @@ func (w *World) padFor(hit []Pt) (Pad, bool) {
 }
 
 func (s *Ship) gentle() bool {
-	a := math.Remainder(s.Angle, 2*math.Pi) // til (-π, π]
+	a := math.Remainder(s.Angle, 2*math.Pi) // to (-π, π]
 	return math.Abs(s.VY) <= MaxLandVY &&
 		math.Abs(s.VX) <= MaxLandVX &&
 		math.Abs(a) <= MaxLandAngle

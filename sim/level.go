@@ -5,24 +5,24 @@ import (
 	"sort"
 )
 
-// Pt er et punkt i verdenskoordinater (piksler, y peker nedover).
+// Pt is a point in world coordinates (pixels, y points down).
 type Pt struct{ X, Y float64 }
 
-// Pad er en flat landingsplattform: toppen av terrenget mellom X0 og X1 ved Y.
+// Pad is a flat landing pad: the top of the terrain between X0 and X1 at Y.
 type Pad struct{ X0, X1, Y float64 }
 
-// Level har terrenget som polygoner (tegnes som omriss) og en usynlig
-// bitmask som brukes til pikselkollisjon. Alt utenfor verdenen er fast stoff.
+// Level holds the terrain as polygons (drawn as outlines) and an invisible
+// bitmask used for pixel collision. Everything outside the world is solid.
 type Level struct {
 	W, H  int
 	Polys [][]Pt
 	Pads  []Pad
-	Start Pt // hvor skipet spawner (midtpunktet)
+	Start Pt // where the ship spawns (its centre)
 
-	Crystals []Pt // Collected by flying onto them
+	Crystals []Pt // collected by flying onto them
 
 	Name      string
-	polyNames []string // just for errors
+	polyNames []string // only used in error messages
 	padNames  []string
 
 	mask []bool
@@ -34,7 +34,7 @@ func NewLevel(w, h int, polys [][]Pt, pads []Pad, start Pt) *Level {
 	return l
 }
 
-// Solid sier om punktet er inni terrenget (eller utenfor verdenen).
+// Solid reports whether the point is inside the terrain (or outside the world).
 func (l *Level) Solid(x, y float64) bool {
 	ix, iy := int(math.Floor(x)), int(math.Floor(y))
 	if ix < 0 || iy < 0 || ix >= l.W || iy >= l.H {
@@ -43,8 +43,8 @@ func (l *Level) Solid(x, y float64) bool {
 	return l.mask[iy*l.W+ix]
 }
 
-// rasterize fyller polygonene (even-odd, scanline) inn i masken.
-// Pikselsenter (x+0.5, y+0.5) avgjør om en piksel er solid.
+// rasterize fills the polygons (even-odd, scanline) into the mask.
+// The pixel centre (x+0.5, y+0.5) decides whether a pixel is solid.
 func (l *Level) rasterize() {
 	l.mask = make([]bool, l.W*l.H)
 	for y := 0; y < l.H; y++ {
@@ -63,7 +63,7 @@ func (l *Level) rasterize() {
 		sort.Float64s(xs)
 		for i := 0; i+1 < len(xs); i += 2 {
 			x0 := int(math.Ceil(xs[i] - 0.5))
-			x1 := int(math.Ceil(xs[i+1] - 0.5)) // eksklusiv
+			x1 := int(math.Ceil(xs[i+1] - 0.5)) // exclusive
 			for x := max(x0, 0); x < min(x1, l.W); x++ {
 				l.mask[y*l.W+x] = true
 			}

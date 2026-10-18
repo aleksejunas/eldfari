@@ -7,8 +7,8 @@ import (
 	"raketti/sim"
 )
 
-// particle brukes både til eksosstriper og vrakdeler: et kort linjestykke
-// med posisjon, fart, vinkel og levetid.
+// particle is used for both exhaust streaks and wreckage: a short line segment
+// with position, velocity, angle and lifetime.
 type particle struct {
 	x, y, vx, vy  float64
 	ang, spin     float64
@@ -25,7 +25,7 @@ func (p *particle) update() {
 	p.life -= sim.Dt
 }
 
-// exhaust gir en eksospartikkel bak skipet, mot motsatt retning av nesa.
+// exhaust returns an exhaust particle behind the ship, opposite the nose.
 func exhaust(s *sim.Ship) particle {
 	pos := s.ToWorld(rand.Float64()*4-2, sim.ShipRear+1)
 	sin, cos := math.Sincos(s.Angle)
@@ -41,7 +41,7 @@ func exhaust(s *sim.Ship) particle {
 	}
 }
 
-// explosion gir vrakdeler som flyr utover og roterer.
+// explosion returns wreckage that flies outwards and spins.
 func explosion(s *sim.Ship) []particle {
 	out := make([]particle, 0, 9)
 	for i := 0; i < 9; i++ {

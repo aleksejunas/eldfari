@@ -1,6 +1,5 @@
 # Game Dev Notes
 
-## Hva slags andre utfordringer kan legges til?
+## What other challenges could be added?
 
-Hva med en bedre lagring av highscore?
-
+What about better storage of high scores?

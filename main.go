@@ -1,5 +1,5 @@
-// Raketti: vektor-remake av et gravitasjonsspill i Thrust/Turboraketti-stil.
-// All spilllogikk ligger i sim/. Denne filen er bare vindu, input og tegning.
+// Raketti: vector remake of a gravity game in the style of Thrust/Turboraketti.
+// All game logic lives in sim/. This file is only window, input and drawing.
 package main
 
 import (
@@ -19,15 +19,15 @@ import (
 )
 
 const (
-	startW = 1280 // startstørrelse på vinduet; vinduet kan skaleres fritt
+	startW = 1280 // initial window size; the window can be resized freely
 	startH = 800
 
-	// HUD-teksten (ebitenutil.DebugPrint) har fast 6x16 px font, så den tegnes
-	// til et lite bilde og skaleres opp med nearest-filter.
+	// The HUD text (ebitenutil.DebugPrint) uses a fixed 6x16 px font, so it is drawn
+	// to a small image and scaled up with the nearest filter.
 	hudScale = 2
 )
 
-// Zoom = skjermpiksler per verdenspiksel. Z bytter mellom disse.
+// Zoom = screen pixels per world pixel. Z cycles through these.
 var zoomSteps = []float64{1, 1.5, 2, 3, 4}
 
 var (
@@ -40,26 +40,26 @@ var (
 
 type Game struct {
 	levels []*sim.Level
-	lvl    int       // indeks i levels
-	best   []float64 // beste tid per bane denne økta (0 = ingen ennå)
+	lvl    int       // index into levels
+	best   []float64 // best time per level this session (0 = none yet)
 
 	world      *sim.World
 	parts      []particle
-	camX, camY float64 // øvre venstre hjørne av utsnittet, i verdenskoordinater
+	camX, camY float64 // top-left corner of the view, in world coordinates
 	prev       sim.State
 
-	w, h    int // logisk skjermstørrelse = vindusstørrelse (satt i Layout)
+	w, h    int // logical screen size = window size (set in Layout)
 	zoomIdx int
 	hud     *ebiten.Image
 
-	tick   int // teller Update-kall, brukes til animasjon
+	tick   int // counts Update calls, used for animation
 	wasWon bool
 }
 
 func newGame() *Game {
 	ls, err := sim.LoadDir(levels.FS)
 	if err != nil {
-		log.Fatalf("banefiler:\n%v", err)
+		log.Fatalf("level files:\n%v", err)
 	}
 	g := &Game{
 		levels:  ls,
@@ -72,7 +72,7 @@ func newGame() *Game {
 	return g
 }
 
-// setLevel bytter bane (med wrap-around) og starter på nytt.
+// setLevel switches level (with wrap-around) and restarts.
 func (g *Game) setLevel(i int) {
 	n := len(g.levels)
 	g.lvl = ((i % n) + n) % n
@@ -90,8 +90,8 @@ func (g *Game) reset() {
 	g.camX, g.camY = g.cameraTarget()
 }
 
-// clampCam holder utsnittet innenfor verdenen. Er verdenen mindre enn utsnittet,
-// sentreres den i stedet.
+// clampCam keeps the view inside the world. If the world is smaller than the view,
+// it is centred instead.
 func clampCam(target, view, world float64) float64 {
 	if world <= view {
 		return (world - view) / 2
@@ -172,8 +172,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	s := &g.world.Ship
 	z := g.zoom()
 
-	// ln tegner et verdens-linjestykke: flytt med kamera, skaler med zoom.
-	// Linjetykkelsen følger zoom, men litt svakere så den ikke blir klumpete.
+	// ln draws a world line segment: offset by the camera, scaled by zoom.
+	// Line width follows zoom, but a bit weaker so it doesn't get chunky.
 	ln := func(x0, y0, x1, y1, w float64, c color.Color) {
 		line(screen, (x0-g.camX)*z, (y0-g.camY)*z, (x1-g.camX)*z, (y1-g.camY)*z, w*z*0.75, c)
 	}
@@ -188,7 +188,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ln(pad.X0, pad.Y, pad.X1, pad.Y, 4, colPad)
 	}
 
-	// Krystaller: en diamant som pulserer og «snurrer» ved å endre bredden.
+	// Crystals: a diamond that pulses and "spins" by changing its width.
 	for i, c := range l.Crystals {
 		if g.world.Got[i] {
 			continue
@@ -228,14 +228,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawHUD(screen)
 }
 
-// fmtTime gir m:ss.s
+// fmtTime formats as m:ss.s
 func fmtTime(t float64) string {
 	m := int(t) / 60
 	return fmt.Sprintf("%d:%04.1f", m, t-float64(m*60))
 }
 
-// drawHUD tegner teksten til et lite bilde (hudScale ganger mindre enn skjermen)
-// og skalerer det opp, siden DebugPrint-fonten ellers blir bitteliten.
+// drawHUD draws the text to a small image (hudScale times smaller than the screen)
+// and scales it up, since the DebugPrint font is tiny otherwise.
 func (g *Game) drawHUD(screen *ebiten.Image) {
 	hw, hh := g.w/hudScale, g.h/hudScale
 	if g.hud == nil || g.hud.Bounds().Dx() != hw || g.hud.Bounds().Dy() != hh {
@@ -281,7 +281,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	screen.DrawImage(g.hud, op)
 }
 
-// Layout: logisk størrelse følger vinduet, så ingenting strekkes eller blir uskarpt.
+// Layout: logical size follows the window, so nothing is stretched or blurred.
 func (g *Game) Layout(outsideW, outsideH int) (int, int) {
 	g.w, g.h = max(outsideW, 320), max(outsideH, 200)
 	return g.w, g.h
@@ -291,7 +291,7 @@ func line(dst *ebiten.Image, x0, y0, x1, y1, w float64, c color.Color) {
 	vector.StrokeLine(dst, float32(x0), float32(y0), float32(x1), float32(y1), float32(w), c, true)
 }
 
-// fade skalerer en farge mot gjennomsiktig. Ebitengine bruker premultiplied alpha.
+// fade scales a colour towards transparent. Ebitengine uses premultiplied alpha.
 func fade(c color.RGBA, a float64) color.RGBA {
 	a = math.Max(0, math.Min(1, a))
 	return color.RGBA{

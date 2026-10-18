@@ -1,61 +1,47 @@
 # Raketti
 
-Gravitasjons-cave-flyer i vektorstil, inspirert av Turboraketti (Amiga, Heikki Kosola).
-Ingen grafikk eller baner er kopiert fra originalen. Bare ideen.
+Vector-style gravity cave flyer, inspired by Turboraketti (Amiga, Heikki Kosola).
+No graphics or levels are copied from the original. Only the idea.
 
-## Kjør
+## Run
 
 ```sh
-go mod tidy      # henter Ebitengine v2 (go.mod har ingen require ennå)
 go run .
-go test ./sim    # fysikk, kollisjon og landing
+go test ./...    # physics, collision, landing and level validation
 ```
 
-Taster: `A`/`D` eller piler = roter, `W`/pil opp/mellomrom = thrust, `R` = restart.
+Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart, `N`/`P` = next/previous
+level, `Z` = zoom, `F` = fullscreen.
 
-Linux trenger de vanlige Ebitengine-bibliotekene (X11/GL/ALSA). Se
-<https://ebitengine.org/en/documents/install.html> hvis bygget klager.
+Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
+<https://ebitengine.org/en/documents/install.html> if the build complains.
 
-## Status
+## Layout
 
-**Verifisert:** `sim/` kompilerer og alle testene går grønt.
-**Ikke verifisert:** `main.go` og `fx.go` ble skrevet uten å kunne hente Ebitengine
-(Go-proxyen var blokkert i sandboxen), så de er aldri kompilert. Forvent å fikse
-småting i API-bruk første gang du bygger.
-
-## Oppbygging
-
-| Fil | Innhold |
+| File | Contents |
 |---|---|
-| `sim/level.go` | Terreng som polygoner, rasteriseres til usynlig bitmask. Plattformer. `DemoLevel()`. |
-| `sim/world.go` | Skip, fysikk (gravitasjon, thrust/masse, drag), kollisjon, landing. Alle konstanter øverst. |
-| `sim/sim_test.go` | Tester. |
-| `main.go` | Ebitengine: input, kamera, tegning, HUD. |
-| `fx.go` | Eksos og vrakdeler (linjestykker). |
+| `sim/world.go` | Ship, physics (gravity, thrust/mass, drag), collision, landing, crystals, win. All constants at the top. |
+| `sim/level.go` | Terrain as polygons, rasterized to an invisible bitmask. Pads. |
+| `sim/levelfile.go` | JSON level format, loading and validation. |
+| `levels/*.json` | The levels, embedded in the binary and sorted by file name. |
+| `main.go` | Ebitengine: input, camera, drawing, HUD. |
+| `fx.go` | Exhaust and wreckage (line segments). |
 
-Tanken: `sim` vet ingenting om Ebitengine, så den er deterministisk og testbar uten vindu.
-Fast tidssteg (60 Hz), ett `Step` per `Update`.
+The idea: `sim` knows nothing about Ebitengine, so it is deterministic and testable without a window.
+Fixed time step (60 Hz), one `Step` per `Update`.
 
-## Fysikken i korte trekk
+## Physics in short
 
-- Akselerasjon fra motor = `Thrust / masse`, og masse = `BaseMass + FuelMass * fuel`.
-  Fullt drivstoff gir tregere skip. Det er kjernen i Turboraketti-følelsen.
-- Landing krever: alle treffpunkter på samme plattform, `|VY| <= 45`, `|VX| <= 30`,
-  vinkel innen 0,3 rad fra rett opp. Ellers krasj.
-- Plattformer fyller på drivstoff når du står på dem.
-- Alle tallene er gjetninger. Spill og juster i `sim/world.go`.
+- Engine acceleration = `Thrust / mass`, and mass = `BaseMass + FuelMass * fuel`.
+  A full tank makes the ship slower. That is the core of the Turboraketti feel.
+- Landing requires all hit points on the same pad, `|VY| <= 80`, `|VX| <= 50` and an angle
+  within 0.5 rad of straight up. Otherwise you crash.
+- Pads refuel the ship while it stands on them.
+- Win by collecting all crystals and landing on the start pad. The timer starts at first liftoff.
+- All numbers are guesses. Play and tune them in `sim/world.go`.
 
-## Kjente begrensninger
+## Known limitations
 
-- Ingen substeps: over ca. 600 px/s kan skipet teoretisk gå gjennom tynne vegger.
-  Terrenget i testbanen er tykt nok, men det bør fikses før høyere hastigheter.
-- Kollisjon er punkttester (hjørner + kantmidtpunkt), ikke full linje-mot-maske.
-- Skipet krasjer i verdensgrensen (alt utenfor banen er fast).
-
-## Neste steg
-
-1. ~~Ett skip, gravitasjon, thrust, bane, krasj~~ (dette)
-2. To spillere, split-screen (to kameraer mot hver sin offscreen-`Image`)
-3. Basestasjon: velg våpen/drivstoff, reparasjon, masse påvirker akselerasjon
-4. Våpen
-5. Væske (drag per piksel), flere baner, ranking
+- No substeps: above roughly 600 px/s the ship could in theory pass through thin walls.
+- Collision is point tests (corners + edge midpoints), not full line-vs-mask.
+- The ship crashes into the world border (everything outside the level is solid).

@@ -1,42 +1,42 @@
 # Raketti – todo
 
-## 1. Krystaller (i gang)
+## 1. Crystals (in progress)
 
-- [ ] Krystaller i banen (Level.Crystals), plukkes opp ved å fly gjennom
-- [ ] Teller og timer i HUD (timeren starter ved første avgang)
-- [ ] Vinn ved å lande på startplattformen med alle krystaller tatt
-- [ ] Rekordtid (først i minnet, senere lagret til fil)
-- [ ] Tester: oppsamling, vinn, timer, fri luft rundt hver krystall
+- [x] Crystals in the level (Level.Crystals), picked up by flying through them
+- [x] Counter and timer in the HUD (timer starts at first liftoff)
+- [x] Win by landing on the start pad with all crystals taken
+- [ ] Best time (in memory first, later saved to file)
+- [ ] Tests: pickup, win, timer, free air around each crystal
 
-## 2. Last i tau (Thrust-stil)
+## 2. Cargo on a rope (Thrust style)
 
-- [ ] Kule/kasse på bakken med en «hook»-avstand til skipet
-- [ ] Tau som stram avstandsbegrensning (først stiv, så evt. fjær)
-- [ ] Kulen påvirkes av gravitasjon og drar i skipet (pendel)
-- [ ] Kollisjon for kulen mot terreng
-- [ ] Levering: kulen må inn på en bestemt plattform
-- [ ] Justér masse: tung last = tregere akselerasjon
+- [ ] Ball/crate on the ground with a "hook" distance to the ship
+- [ ] Rope as a hard distance constraint (rigid first, maybe spring later)
+- [ ] The ball is affected by gravity and pulls on the ship (pendulum)
+- [ ] Collision for the ball against terrain
+- [ ] Delivery: the ball must reach a specific pad
+- [ ] Tune mass: heavy cargo = slower acceleration
 
-## 3. Multiple game-modes
+## 3. Multiple game modes
 
-- [] Minimal (just collect crystals)
-- [] 2 player
-- [] 
+- [ ] Minimal (just collect crystals)
+- [ ] 2 player
+- [ ]
 
-## 4. To spillere (det Turboraketti egentlig var)
+## 4. Two players (what Turboraketti really was)
 
-- [ ] To skip i World, to input-sett (WASD + piler)
-- [ ] Split-screen: to kameraer mot hver sin offscreen-Image
-- [ ] Skyting og prosjektiler
-- [ ] Treff, skade, død og respawn på base
-- [ ] Basestasjon: velg våpen og drivstoff, reparasjon
-- [ ] Masse = skip + drivstoff + ammo (avveiningen mellom last og fart)
-- [ ] Væske (drag per piksel) og flere baner
+- [ ] Two ships in World, two input sets (WASD + arrows)
+- [ ] Split screen: two cameras rendering to separate offscreen Images
+- [ ] Shooting and projectiles
+- [ ] Hits, damage, death and respawn at base
+- [ ] Base station: choose weapons and fuel, repair
+- [ ] Mass = ship + fuel + ammo (the trade-off between load and speed)
+- [ ] Liquid (drag per pixel) and more levels
 
-## Smått og nyttig
+## Small and useful
 
-- [ ] Minimap eller piler mot nærmeste plattform
-- [ ] Visuell effekt når du fyller drivstoff
-- [ ] Banene som data (JSON eller bilde) i stedet for kode
-- [ ] Substeps i fysikken (høy fart kan gå gjennom tynne vegger)
-- [] Speedometer
+- [ ] Minimap or arrows towards the nearest pad
+- [ ] Visual effect while refuelling
+- [x] Levels as data (JSON or image) instead of code
+- [ ] Substeps in the physics (high speed can pass through thin walls)
+- [ ] Speedometer
