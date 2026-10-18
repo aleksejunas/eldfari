@@ -44,7 +44,7 @@ I want to write this code myself. Claude explains and gives code to copy, but do
 
 ## Small and useful
 
-- [ ] Minimap or arrows towards the nearest pad
+- [x] Arrows towards the nearest crystal and pad (start pad once all crystals are taken)
 - [ ] Visual effect while refuelling
 - [x] Levels as data (JSON or image) instead of code
 - [ ] Substeps in the physics (high speed can pass through thin walls)

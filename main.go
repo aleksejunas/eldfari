@@ -217,6 +217,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
+	// Arrows on a ring around the ship towards targets that are off screen:
+	// the nearest crystal, and the pad to head for.
+	vw, vh := float64(g.w)/z, float64(g.h)/z
+	arrow := func(tx, ty float64, c color.Color) {
+		if tx > g.camX && tx < g.camX+vw && ty > g.camY && ty < g.camY+vh {
+			return
+		}
+		a := math.Atan2(ty-s.Y, tx-s.X)
+		dx, dy := math.Cos(a), math.Sin(a)
+		tipX, tipY := s.X+dx*34, s.Y+dy*34
+		bx, by := tipX-dx*8, tipY-dy*8
+		ln(tipX, tipY, bx-dy*6, by+dx*6, 2, c)
+		ln(tipX, tipY, bx+dy*6, by-dx*6, 2, c)
+	}
+	if s.State != sim.Crashed && !g.world.Won {
+		if c, ok := g.world.NearestCrystal(); ok {
+			arrow(c.X, c.Y, colGem)
+		}
+		pad := g.world.GoalPad()
+		arrow((pad.X0+pad.X1)/2, pad.Y, colPad)
+	}
+
 	for _, p := range g.parts {
 		dx, dy := math.Cos(p.ang)*p.length/2, math.Sin(p.ang)*p.length/2
 		c := fade(colTerrain, p.life/p.maxLife)

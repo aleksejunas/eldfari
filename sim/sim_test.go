@@ -203,6 +203,35 @@ func TestWinNeedsAllCrystalsAndStartPad(t *testing.T) {
 	}
 }
 
+func TestNearestCrystalAndGoalPad(t *testing.T) {
+	floor := []Pt{{0, 500}, {800, 500}, {800, 600}, {0, 600}}
+	pads := []Pad{{50, 150, 500}, {650, 750, 500}}
+	l := NewLevel(800, 600, [][]Pt{floor}, pads, Pt{100, 500 - ShipRear - 0.5})
+	l.Crystals = []Pt{{200, 300}, {600, 300}}
+	w := NewWorld(l)
+	fly(w, 550, 300, 0, 0, 0)
+
+	if c, ok := w.NearestCrystal(); !ok || c != l.Crystals[1] {
+		t.Errorf("NearestCrystal = %v %v, expected %v", c, ok, l.Crystals[1])
+	}
+	if p := w.GoalPad(); p != pads[1] {
+		t.Errorf("GoalPad = %v, expected the nearest pad %v", p, pads[1])
+	}
+
+	w.Got[1], w.NGot = true, 1
+	if c, ok := w.NearestCrystal(); !ok || c != l.Crystals[0] {
+		t.Errorf("NearestCrystal = %v %v, expected %v after taking the nearest", c, ok, l.Crystals[0])
+	}
+
+	w.Got[0], w.NGot = true, 2
+	if _, ok := w.NearestCrystal(); ok {
+		t.Error("NearestCrystal should return false when all are taken")
+	}
+	if p := w.GoalPad(); p != pads[0] {
+		t.Errorf("GoalPad = %v, expected the start pad %v when all crystals are taken", p, pads[0])
+	}
+}
+
 func TestTimerStartsAtLiftoff(t *testing.T) {
 	w := crystalWorld()
 	run(w, 30, Input{}) // standing on the pad

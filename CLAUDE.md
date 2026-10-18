@@ -49,8 +49,7 @@ Polygon edges must not cross each other (that makes holes). Everything outside t
 
 ## Roadmap (in this order)
 
-1. Small things: arrow or minimap towards the nearest crystal and pad, save best time to file,
-   physics substeps, fuel effect.
+1. Small things: physics substeps, fuel effect. (Done: arrows to crystal/pad, best time to file.)
 2. WASM build hosted on GitHub Pages, so a non-developer friend can test. The user writes this
    code themselves: explain and give code to copy, do not edit files for it.
 3. Cargo on a rope, Thrust style.

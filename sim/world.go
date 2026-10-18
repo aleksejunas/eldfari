@@ -164,6 +164,39 @@ func (w *World) pickup() {
 	}
 }
 
+// NearestCrystal returns the closest crystal not yet taken, or false if all are taken.
+func (w *World) NearestCrystal() (Pt, bool) {
+	s := &w.Ship
+	var best Pt
+	bestD, found := math.Inf(1), false
+	for i, c := range w.Level.Crystals {
+		if w.Got[i] {
+			continue
+		}
+		if d := math.Hypot(c.X-s.X, c.Y-s.Y); d < bestD {
+			best, bestD, found = c, d, true
+		}
+	}
+	return best, found
+}
+
+// GoalPad returns the pad to head for: the start pad once all crystals are taken,
+// otherwise the nearest pad (for refuelling).
+func (w *World) GoalPad() Pad {
+	if w.NGot == len(w.Level.Crystals) {
+		return w.Level.Pads[0]
+	}
+	s := &w.Ship
+	best := w.Level.Pads[0]
+	bestD := math.Inf(1)
+	for _, p := range w.Level.Pads {
+		if d := math.Hypot((p.X0+p.X1)/2-s.X, p.Y-s.Y); d < bestD {
+			best, bestD = p, d
+		}
+	}
+	return best
+}
+
 func (w *World) collide() {
 	s := &w.Ship
 	var hit []Pt
