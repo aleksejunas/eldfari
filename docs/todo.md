@@ -5,10 +5,19 @@
 - [x] Crystals in the level (Level.Crystals), picked up by flying through them
 - [x] Counter and timer in the HUD (timer starts at first liftoff)
 - [x] Win by landing on the start pad with all crystals taken
-- [ ] Best time (in memory first, later saved to file)
+- [x] Best time, saved to file (`besttimes.go`)
 - [ ] Tests: pickup, win, timer, free air around each crystal
 
-## 2. Cargo on a rope (Thrust style)
+## 2. Share the game: playable in the browser
+
+I want to write this code myself. Claude explains and gives code to copy, but does not edit files.
+
+- [ ] WASM build (`GOOS=js GOARCH=wasm`) + `wasm_exec.js` + a small `index.html`
+- [ ] Host on GitHub Pages (static, e.g. a GitHub Actions workflow that builds and deploys)
+- [ ] Best times in the browser (no config dir there: use localStorage or keep in memory)
+- [ ] Short instructions for a non-developer: link, keys, what the goal is
+
+## 3. Cargo on a rope (Thrust style)
 
 - [ ] Ball/crate on the ground with a "hook" distance to the ship
 - [ ] Rope as a hard distance constraint (rigid first, maybe spring later)
@@ -17,13 +26,13 @@
 - [ ] Delivery: the ball must reach a specific pad
 - [ ] Tune mass: heavy cargo = slower acceleration
 
-## 3. Multiple game modes
+## 4. Multiple game modes
 
 - [ ] Minimal (just collect crystals)
 - [ ] 2 player
 - [ ]
 
-## 4. Two players (what Turboraketti really was)
+## 5. Two players (what Turboraketti really was)
 
 - [ ] Two ships in World, two input sets (WASD + arrows)
 - [ ] Split screen: two cameras rendering to separate offscreen Images

@@ -13,6 +13,8 @@ go test ./...    # physics, collision, landing and level validation
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart, `N`/`P` = next/previous
 level, `Z` = zoom, `F` = fullscreen.
 
+Best times are saved to `~/.config/raketti/best.json` (per level name).
+
 Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 <https://ebitengine.org/en/documents/install.html> if the build complains.
 
@@ -26,6 +28,7 @@ Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 | `levels/*.json` | The levels, embedded in the binary and sorted by file name. |
 | `main.go` | Ebitengine: input, camera, drawing, HUD. |
 | `fx.go` | Exhaust and wreckage (line segments). |
+| `besttimes.go` | Best time per level, saved as JSON in the user's config dir. |
 
 The idea: `sim` knows nothing about Ebitengine, so it is deterministic and testable without a window.
 Fixed time step (60 Hz), one `Step` per `Update`.

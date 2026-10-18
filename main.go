@@ -40,8 +40,8 @@ var (
 
 type Game struct {
 	levels []*sim.Level
-	lvl    int       // index into levels
-	best   []float64 // best time per level this session (0 = none yet)
+	lvl    int // index into levels
+	best   *bestTimes
 
 	world      *sim.World
 	parts      []particle
@@ -63,7 +63,7 @@ func newGame() *Game {
 	}
 	g := &Game{
 		levels:  ls,
-		best:    make([]float64, len(ls)),
+		best:    loadBestTimes(),
 		w:       startW,
 		h:       startH,
 		zoomIdx: 2, // 2x
@@ -133,9 +133,7 @@ func (g *Game) Update() error {
 	g.world.Step(in)
 
 	if g.world.Won && !g.wasWon {
-		if b := g.best[g.lvl]; b == 0 || g.world.Time < b {
-			g.best[g.lvl] = g.world.Time
-		}
+		g.best.record(g.world.Level.Name, g.world.Time)
 	}
 	g.wasWon = g.world.Won
 
@@ -253,7 +251,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(g.hud, fmt.Sprintf("LEVEL %d/%d  %s", g.lvl+1, len(g.levels), w.Level.Name), 8, 36)
 
 	stats := fmt.Sprintf("CRYSTALS %d/%d   TIME %s", w.NGot, total, fmtTime(w.Time))
-	if b := g.best[g.lvl]; b > 0 {
+	if b := g.best.get(w.Level.Name); b > 0 {
 		stats += "   BEST " + fmtTime(b)
 	}
 	ebitenutil.DebugPrintAt(g.hud, stats, hw-len(stats)*6-8, 4)
