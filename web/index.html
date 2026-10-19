@@ -16,7 +16,7 @@
     <script src="wasm_exec.js"></script>
 <script>
       const go = new Go();
-      WebAssembly.instantiateStreaming(fetch("raketti".wasm"), go.importObject)
+      WebAssembly.instantiateStreaming(fetch("raketti.wasm"), go.importObject)
     .then(result => {
     document.getElementById("status").remove();
     go.run(result.instance);
@@ -27,3 +27,4 @@
     })
 </script>
   </body>
+</html>
