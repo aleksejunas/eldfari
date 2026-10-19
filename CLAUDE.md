@@ -16,9 +16,11 @@ go vet ./...
 - `sim/` is deterministic and does **not** import Ebitengine. All game logic
   lives here and is tested without a window. Fixed time step `Dt = 1/60`, one
   `World.Step` per `Update`.
-- `main.go` is only window, input, camera, drawing and HUD. `fx.go` is
-  particles (cosmetic only, uses `math/rand`, never affects `sim`).
-- New game logic belongs in `sim/` with tests, not in `main.go`.
+- `game/` is the Ebitengine front end: window, input, camera, drawing and HUD
+  (`game.go`), particles (`fx.go`, cosmetic only, uses `math/rand`, never
+  affects `sim`), best times and version info. Root `main.go` only calls
+  `game.Run()`.
+- New game logic belongs in `sim/` with tests, not in `game/`.
 - Browser build: `web/index.html` + GitHub Actions (`.github/workflows/`)
   deploys to GitHub Pages on every push to `master`.
 

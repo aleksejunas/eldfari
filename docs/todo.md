@@ -5,7 +5,7 @@
 - [x] Crystals in the level (Level.Crystals), picked up by flying through them
 - [x] Counter and timer in the HUD (timer starts at first liftoff)
 - [x] Win by landing on the start pad with all crystals taken
-- [x] Best time, saved to file (`besttimes.go`)
+- [x] Best time, saved to file (`game/besttimes.go`)
 - [x] Tests: pickup, win, timer, free air around each crystal
 
 ## 2. Share the game: playable in the browser
@@ -47,9 +47,11 @@ but does not edit files.
 
 ## Small and useful
 
+- [x] Version info in the HUD (git commit + time), to see which build the web
+      version is running (`game/version.go`)
 - [x] Arrows towards the nearest crystal and pad (start pad once all
       crystals are taken)
-- [ ] Visual effect while refuelling
+- [x] Visual effect while refuelling
 - [x] Levels as data (JSON or image) instead of code
 - [ ] Substeps in the physics (high speed can pass through thin walls)
 - [ ] Speedometer

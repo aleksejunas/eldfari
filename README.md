@@ -66,10 +66,13 @@ Both are build output and ignored by git.
   Pads.
 - `sim/levelfile.go`: JSON level format, loading and validation.
 - `levels/*.json`: the levels, embedded in the binary and sorted by file name.
-- `main.go`: Ebitengine: input, camera, drawing, HUD.
-- `fx.go`: exhaust and wreckage (line segments).
-- `besttimes.go`: best time per level, saved as JSON in the user's config dir
-  (memory only in the browser).
+- `main.go`: starts the game, nothing else.
+- `game/game.go`: Ebitengine: window, input, camera, drawing, HUD.
+- `game/fx.go`: exhaust, wreckage and refuel sparks (line segments).
+- `game/besttimes.go`: best time per level, saved as JSON in the user's
+  config dir (memory only in the browser).
+- `game/version.go`: git commit and time the binary was built from, shown in
+  the HUD.
 - `web/index.html`: page that loads `wasm_exec.js` and starts `raketti.wasm`.
 - `.github/workflows/pages.yml`: builds the WASM version and deploys it to
   GitHub Pages.
