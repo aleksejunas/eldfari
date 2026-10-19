@@ -1,2 +1,4 @@
 /raketti
 *.exe
+web/raketti.wasm
+web/wasm_exec.js
