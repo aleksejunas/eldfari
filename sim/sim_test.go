@@ -149,6 +149,24 @@ func TestRefuelOnPad(t *testing.T) {
 	}
 }
 
+func TestRefuellingFlag(t *testing.T) {
+	w := testWorld()
+	w.Ship.Fuel = 0.5
+	w.Step(Input{})
+	if !w.Ship.Refuelling {
+		t.Error("should be refuelling while landed with a tank that is not full")
+	}
+	run(w, 180, Input{}) // 3 s: the tank is full
+	if w.Ship.Refuelling {
+		t.Error("should stop Refuelling when the tank is full")
+	}
+	w.Ship.Fuel = 0.5
+	w.Step(Input{Thrust: true}) // lifts off
+	if w.Ship.Refuelling {
+		t.Error("should not be refuelling in the air")
+	}
+}
+
 func TestLiftoffFromPad(t *testing.T) {
 	w := testWorld()
 	run(w, 30, Input{Thrust: true})

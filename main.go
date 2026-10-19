@@ -143,6 +143,9 @@ func (g *Game) Update() error {
 			g.parts = append(g.parts, exhaust(s))
 		}
 	}
+	if s.Refuelling && g.tick%3 == 0 {
+		g.parts = append(g.parts, refuelSpark(s))
+	}
 	if s.State == sim.Crashed && g.prev != sim.Crashed {
 		g.parts = append(g.parts, explosion(s)...)
 	}
@@ -241,7 +244,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, p := range g.parts {
 		dx, dy := math.Cos(p.ang)*p.length/2, math.Sin(p.ang)*p.length/2
-		c := fade(colTerrain, p.life/p.maxLife)
+		c := fade(p.col, p.life/p.maxLife)
 		ln(p.x-dx, p.y-dy, p.x+dx, p.y+dy, 2, c)
 	}
 
@@ -268,7 +271,11 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	total := len(w.Level.Crystals)
 
 	ebitenutil.DebugPrintAt(g.hud, "FUEL", 8, 4)
-	line(g.hud, 40, 13, 40+60*s.Fuel, 13, 5, colPad)
+	fuelCol := colPad
+	if s.Refuelling && g.tick/10%2 == 0 {
+		fuelCol = colGem // the bar blinks while refuelling
+	}
+	line(g.hud, 40, 13, 40+60*s.Fuel, 13, 5, fuelCol)
 	ebitenutil.DebugPrintAt(g.hud, fmt.Sprintf("VX %+4.0f  VY %+4.0f", s.VX, s.VY), 8, 20)
 	ebitenutil.DebugPrintAt(g.hud, fmt.Sprintf("LEVEL %d/%d  %s", g.lvl+1, len(g.levels), w.Level.Name), 8, 36)
 

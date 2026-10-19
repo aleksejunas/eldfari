@@ -1,13 +1,14 @@
 package main
 
 import (
+	"image/color"
 	"math"
 	"math/rand"
 
 	"raketti/sim"
 )
 
-// particle is used for both exhaust streaks and wreckage: a short line segment
+// particle is used for exhaust streaks, fuel sparks and wreckage: a short line segment
 // with position, velocity, angle and lifetime.
 type particle struct {
 	x, y, vx, vy  float64
@@ -15,6 +16,7 @@ type particle struct {
 	length        float64
 	life, maxLife float64
 	grav          float64
+	col           color.RGBA
 }
 
 func (p *particle) update() {
@@ -38,6 +40,7 @@ func exhaust(s *sim.Ship) particle {
 		x: pos.X, y: pos.Y, vx: vx, vy: vy,
 		ang: math.Atan2(vy, vx), length: 3,
 		life: life, maxLife: life,
+		col: colTerrain,
 	}
 }
 
@@ -55,7 +58,22 @@ func explosion(s *sim.Ship) []particle {
 			length: 5 + rand.Float64()*7,
 			life:   life, maxLife: life,
 			grav: 40,
+			col:  colTerrain,
 		})
 	}
 	return out
+}
+
+// refuelSpark returns a spark that rises from the pad up through the ship
+func refuelSpark(s *sim.Ship) particle {
+	life := 0.3 + rand.Float64()*0.2
+	return particle{
+		x:   s.X + rand.Float64()*16 - 8,
+		y:   s.Y + sim.ShipRear + 0.5, // the pad surface under the ship
+		vy:  -40 - rand.Float64()*30,
+		ang: -math.Pi / 2, length: 3,
+		life: life, maxLife: life,
+		col: colGem,
+	}
+
 }

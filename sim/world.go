@@ -44,6 +44,7 @@ type Ship struct {
 	Fuel         float64 // 0..1
 	State        State
 	Thrusting    bool // true if the engine fired this time step
+	Refuelling   bool // true if the tank was filled this time step
 }
 
 func (s *Ship) Mass() float64 { return BaseMass + FuelMass*s.Fuel }
@@ -103,6 +104,7 @@ func (w *World) Reset() {
 func (w *World) Step(in Input) {
 	s := &w.Ship
 	s.Thrusting = false
+	s.Refuelling = false
 
 	if w.Won || s.State == Crashed {
 		return
@@ -116,6 +118,7 @@ func (w *World) Step(in Input) {
 			s.State = Flying // lifts off, continues below
 			w.Started = true
 		} else {
+			s.Refuelling = s.Fuel < 1
 			s.Fuel = min(1, s.Fuel+RefuelRate*Dt)
 			return
 		}
