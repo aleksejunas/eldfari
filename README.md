@@ -67,7 +67,9 @@ Both are build output and ignored by git.
 - `sim/levelfile.go`: JSON level format, loading and validation.
 - `levels/*.json`: the levels, embedded in the binary and sorted by file name.
 - `main.go`: starts the game, nothing else.
-- `game/game.go`: Ebitengine: window, input, camera, drawing, HUD.
+- `game/game.go`: Ebitengine: window, input, camera, drawing.
+- `game/hud.go`: the HUD (fuel, speed, time, crystals, messages), drawn with
+  the Go fonts and scaled by the window height.
 - `game/fx.go`: exhaust, wreckage and refuel sparks (line segments).
 - `game/besttimes.go`: best time per level, saved as JSON in the user's
   config dir (memory only in the browser).

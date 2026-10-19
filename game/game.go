@@ -3,14 +3,12 @@
 package game
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
@@ -21,13 +19,9 @@ import (
 const (
 	startW = 1280 // initial window size; the window can be resized freely
 	startH = 800
-
-	// The HUD text (ebitenutil.DebugPrint) uses a fixed 6x16 px font, so it is drawn
-	// to a small image and scaled up with the nearest filter.
-	hudScale = 2
 )
 
-// Zoom = screen pixels per world pixel. Z cycles through these.
+// Zoom = window pixels per world pixel. Z cycles through these.
 var zoomSteps = []float64{1, 1.5, 2, 3, 4}
 
 var (
@@ -48,9 +42,9 @@ type Game struct {
 	camX, camY float64 // top-left corner of the view, in world coordinates
 	prev       sim.State
 
-	w, h    int // logical screen size = window size (set in Layout)
+	w, h    int     // screen size in real pixels (set in Layout)
+	scale   float64 // g.h / startH: the HUD and zoom are designed for a startH tall screen
 	zoomIdx int
-	hud     *ebiten.Image
 
 	tick    int // counts Update calls, used for animation
 	version string
@@ -67,6 +61,7 @@ func newGame() *Game {
 		best:    loadBestTimes(),
 		w:       startW,
 		h:       startH,
+		scale:   1,
 		zoomIdx: 2, // 2x
 		version: version(),
 	}
@@ -82,7 +77,8 @@ func (g *Game) setLevel(i int) {
 	g.reset()
 }
 
-func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] }
+// zoom returns screen pixels per world pixel.
+func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
 
 func (g *Game) reset() {
 	g.world.Reset()
@@ -232,9 +228,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		a := math.Atan2(ty-s.Y, tx-s.X)
 		dx, dy := math.Cos(a), math.Sin(a)
 		tipX, tipY := s.X+dx*34, s.Y+dy*34
-		bx, by := tipX-dx*8, tipY-dy*8
-		ln(tipX, tipY, bx-dy*6, by+dx*6, 2, c)
-		ln(tipX, tipY, bx+dy*6, by-dx*6, 2, c)
+		bx, by := tipX-dx*10, tipY-dy*10
+		lx, ly := bx-dy*5, by+dx*5
+		rx, ry := bx+dy*5, by-dx*5
+		ln(tipX, tipY, lx, ly, 2, c)
+		ln(lx, ly, rx, ry, 2, c)
+		ln(rx, ry, tipX, tipY, 2, c)
 	}
 	if s.State != sim.Crashed && !g.world.Won {
 		if c, ok := g.world.NearestCrystal(); ok {
@@ -253,67 +252,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawHUD(screen)
 }
 
-// fmtTime formats as m:ss.s
-func fmtTime(t float64) string {
-	m := int(t) / 60
-	return fmt.Sprintf("%d:%04.1f", m, t-float64(m*60))
-}
-
-// drawHUD draws the text to a small image (hudScale times smaller than the screen)
-// and scales it up, since the DebugPrint font is tiny otherwise.
-func (g *Game) drawHUD(screen *ebiten.Image) {
-	hw, hh := g.w/hudScale, g.h/hudScale
-	if g.hud == nil || g.hud.Bounds().Dx() != hw || g.hud.Bounds().Dy() != hh {
-		g.hud = ebiten.NewImage(hw, hh)
-	}
-	g.hud.Clear()
-
-	w := g.world
-	s := &w.Ship
-	total := len(w.Level.Crystals)
-
-	ebitenutil.DebugPrintAt(g.hud, "FUEL", 8, 4)
-	fuelCol := colPad
-	if s.Refuelling && g.tick/10%2 == 0 {
-		fuelCol = colGem // the bar blinks while refuelling
-	}
-	line(g.hud, 40, 13, 40+60*s.Fuel, 13, 5, fuelCol)
-	ebitenutil.DebugPrintAt(g.hud, fmt.Sprintf("VX %+4.0f  VY %+4.0f", s.VX, s.VY), 8, 20)
-	ebitenutil.DebugPrintAt(g.hud, fmt.Sprintf("LEVEL %d/%d  %s", g.lvl+1, len(g.levels), w.Level.Name), 8, 36)
-
-	stats := fmt.Sprintf("CRYSTALS %d/%d   TIME %s", w.NGot, total, fmtTime(w.Time))
-	if b := g.best.get(w.Level.Name); b > 0 {
-		stats += "   BEST " + fmtTime(b)
-	}
-	ebitenutil.DebugPrintAt(g.hud, stats, hw-len(stats)*6-8, 4)
-
-	msg := ""
-	switch {
-	case w.Won:
-		msg = "YOU WIN! TIME " + fmtTime(w.Time) + " - R retry, N next level"
-	case s.State == sim.Crashed:
-		msg = "CRASHED - press R"
-	case w.NGot == total && total > 0:
-		msg = "ALL CRYSTALS - LAND ON THE START PAD"
-	case s.State == sim.Landed:
-		msg = "LANDED - thrust to lift off"
-	}
-	if msg != "" {
-		ebitenutil.DebugPrintAt(g.hud, msg, (hw-len(msg)*6)/2, 52)
-	}
-	help := fmt.Sprintf("A/D rotate | W/space thrust | R restart | N/P level | Z zoom %.1fx | F fullscreen", g.zoom())
-	ebitenutil.DebugPrintAt(g.hud, help, 8, hh-20)
-	ebitenutil.DebugPrintAt(g.hud, g.version, hw-len(g.version)*6-8, hh-36)
-
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(hudScale, hudScale)
-	op.Filter = ebiten.FilterNearest
-	screen.DrawImage(g.hud, op)
-}
-
-// Layout: logical size follows the window, so nothing is stretched or blurred.
+// Layout draws at the screen's real resolution (window size × the screen's
+// scale factor), so lines and text stay sharp on HiDPI screens. Everything is
+// then scaled by the screen height, so the game looks the same at any size.
 func (g *Game) Layout(outsideW, outsideH int) (int, int) {
-	g.w, g.h = max(outsideW, 320), max(outsideH, 200)
+	dsf := ebiten.Monitor().DeviceScaleFactor()
+	g.w = int(float64(max(outsideW, 320)) * dsf)
+	g.h = int(float64(max(outsideH, 200)) * dsf)
+	g.scale = float64(g.h) / startH
 	return g.w, g.h
 }
 
