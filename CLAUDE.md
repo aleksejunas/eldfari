@@ -22,6 +22,9 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
   affects `sim`), best times and version info. Root `main.go` only calls
   `game.Run()`.
 - New game logic belongs in `sim/` with tests, not in `game/`.
+- Game modes: `sim.Mode` (crystals, cargo) on each `Level`; `World.Step`
+  switches on it. Cargo mode lives in `sim/cargo.go` (rope, cargo, delivery)
+  and `game/cargo.go` (drawing). `M` switches mode until there is a chooser.
 - Browser build: `web/index.html` + GitHub Actions (`.github/workflows/`)
   deploys to GitHub Pages on every push to `master`.
 
@@ -32,22 +35,27 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
 - Landing: every contact point touching terrain must be on the same pad, and
   speed and angle must be gentle (`MaxLandVY`, `MaxLandVX`, `MaxLandAngle`,
   see `gentle()`). Otherwise crash.
-- Win: collect all crystals and land on the start pad (`Pads[0]`). The timer
-  starts at first liftoff.
+- Crystals win: collect all crystals and land on the start pad (`Pads[0]`).
+  The timer starts at first liftoff.
 - Pads refuel the ship while it stands on them.
+- 4 substeps per frame (`Substeps`), so fast movement and the rope stay
+  stable.
+- Cargo: rope 80 px, slack allowed, never stretches; cargo mass 0.8; hooks on
+  within the rope length; bounces without damage; delivered when it rests
+  calmly on the goal pad.
 
 ## Terrain
 
-Polygons filled even-odd, rasterized to a bool mask for pixel collision
+Polygons filled even-odd, rasterized to a bit mask for pixel collision
 (`sim/level.go`). Polygon edges must not cross each other (that makes holes).
 Everything outside the world is solid.
 
 ## Level format
 
-- JSON in one folder per game mode (`levels/crystals/` for now), embedded in
-  `levels/levels.go`. No mode field in the JSON: the folder is the mode. A
-  mode's folder is added to the embed pattern when the mode is built
-  (`go:embed` fails on an empty folder).
+- JSON in one folder per game mode (`levels/crystals/`, `levels/cargo/`),
+  embedded in `levels/levels.go`. No mode field in the JSON: the folder is
+  the mode. A new mode's folder is added to the embed pattern when the mode
+  is built (`go:embed` fails on an empty folder).
 - File names start with a number with gaps: `10-grotta.json`. `LoadDir` sorts
   numerically (100 after 90) and rejects missing or duplicate numbers.
 - Parsed and validated in `sim/levelfile.go`: unknown fields are errors, and
@@ -59,6 +67,9 @@ Everything outside the world is solid.
   ~7x ship height (Passasjen, 144 px) down to ~4x (Dypet, 79 px). Check a new
   or changed level with `go run ./cmd/levelstat`. If a level is too hard,
   tune it. Level names are proper names and stay Norwegian.
+- Cargo levels add `"cargo": [x, y]` and `"goal": "pad name"` instead of
+  crystals: 10 Kranen, 20 Lageret, 30 Hylla. `cmd/levelstat` only handles
+  crystals levels.
 - Best times are keyed by mode and level name (`crystals/Grotta`).
 
 ## Conventions
@@ -82,9 +93,9 @@ they will be done:
    levels in one folder per mode.
 2. Done: crystals levels 30–60 and `cmd/levelstat`; they still need
    play-testing by someone else.
-3. Next: gamepad (`docs/gamepad.md`).
-4. Cargo on a rope: substeps first, then pendulum, mass, collision,
-   delivery, cargo mode.
-5. Mode chooser (once there are two modes).
+3. Done: cargo on a rope (substeps, rope, cargo mode, 3 levels); needs
+   play-testing.
+4. Next: mode chooser.
+5. Gamepad (`docs/gamepad.md`).
 6. Two players in split screen.
 7. Later: in-game level editor.

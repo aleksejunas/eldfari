@@ -24,6 +24,21 @@ func TestShippedLevelsLoadAndValidate(t *testing.T) {
 	}
 }
 
+func TestShippedCargoLevelsLoadAndValidate(t *testing.T) {
+	ls, err := LoadDir(levels.Cargo, ModeCargo)
+	if err != nil {
+		t.Fatalf("the cargo levels are not valid:\n%v", err)
+	}
+	for _, l := range ls {
+		w := NewWorld(l)
+		run(w, 60, Input{})
+		if w.Ship.State != Landed || w.Cargo.Attached || w.Won {
+			t.Errorf("%s: after 1 s without input: ship %v, cargo attached %v, won %v",
+				l.Name, w.Ship.State, w.Cargo.Attached, w.Won)
+		}
+	}
+}
+
 // Every shipped level: the ship starts at rest on the start pad and refuels.
 func TestShippedLevelsSpawnAndRefuel(t *testing.T) {
 	ls, err := LoadDir(levels.Crystals, ModeCrystals)

@@ -33,9 +33,13 @@ var (
 	colGem     = color.RGBA{0xf5, 0xd6, 0x8a, 0xff}
 )
 
+// modeNames are the folders in levels/, also used in best-time keys and the HUD.
+var modeNames = map[sim.Mode]string{sim.ModeCrystals: "crystals", sim.ModeCargo: "cargo"}
+
 type Game struct {
-	levels []*sim.Level
-	lvl    int // index into levels
+	levels map[sim.Mode][]*sim.Level
+	mode   sim.Mode
+	lvl    int // index into levels[mode]
 	best   *bestTimes
 
 	world      *sim.World
@@ -47,8 +51,7 @@ type Game struct {
 	scale   float64 // g.h / startH: the HUD and zoom are designed for a startH tall screen
 	zoomIdx int
 
-	tick    int    // counts Update calls, used for animation
-	mode    string // folder in levels/; only "crystals" for now
+	tick    int // counts Update calls, used for animation
 	version string
 	wasWon  bool
 	showFPS bool // FPS overlay, toggled with I
@@ -56,34 +59,39 @@ type Game struct {
 }
 
 func newGame() *Game {
-	ls, err := sim.LoadDir(levels.Crystals, sim.ModeCrystals)
+	crystals, err := sim.LoadDir(levels.Crystals, sim.ModeCrystals)
 	if err != nil {
-		log.Fatalf("level files:\n%v", err)
+		log.Fatalf("crystals level files:\n%v", err)
+	}
+	cargo, err := sim.LoadDir(levels.Cargo, sim.ModeCargo)
+	if err != nil {
+		log.Fatalf("cargo level files:\n%v", err)
 	}
 	g := &Game{
-		levels:  ls,
+		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo},
 		best:    loadBestTimes(),
 		w:       startW,
 		h:       startH,
 		scale:   1,
 		zoomIdx: 2, // 2x
 		version: version(),
-		mode:    "crystals",
 	}
 	g.setLevel(0)
 	return g
 }
 
-// setLevel switches level (with wrap-around) and restarts.
+// setLevel switches level within the current mode (with wrap-around) and
+// restarts.
 func (g *Game) setLevel(i int) {
-	n := len(g.levels)
+	ls := g.levels[g.mode]
+	n := len(ls)
 	g.lvl = ((i % n) + n) % n
-	g.world = sim.NewWorld(g.levels[g.lvl])
+	g.world = sim.NewWorld(ls[g.lvl])
 	g.reset()
 }
 
 // bestKey is the key for the current level's best time: mode and level name.
-func (g *Game) bestKey() string { return g.mode + "/" + g.world.Level.Name }
+func (g *Game) bestKey() string { return modeNames[g.mode] + "/" + g.world.Level.Name }
 
 // zoom returns screen pixels per world pixel.
 func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
@@ -132,6 +140,15 @@ func (g *Game) Update() error {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		g.showFPS = !g.showFPS
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		// Switch game mode. Temporary, until there is a mode chooser.
+		if g.mode == sim.ModeCrystals {
+			g.mode = sim.ModeCargo
+		} else {
+			g.mode = sim.ModeCrystals
+		}
+		g.setLevel(0)
 	}
 
 	in := sim.Input{
@@ -214,6 +231,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ln(c.X, c.Y-r, c.X, c.Y+r, 1, colGem)
 	}
 
+	if l.Mode == sim.ModeCargo {
+		g.drawCargo(ln)
+	}
+
 	if s.State != sim.Crashed {
 		v := s.Points()
 		for i := range v {
@@ -231,7 +252,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Arrows on a ring around the ship towards targets that are off screen:
-	// the nearest crystal, and the pad to head for.
+	// the nearest crystal or the cargo, and the pad to head for.
 	vw, vh := float64(g.w)/z, float64(g.h)/z
 	arrow := func(tx, ty float64, c color.RGBA) {
 		if tx > g.camX && tx < g.camX+vw && ty > g.camY && ty < g.camY+vh {
@@ -251,8 +272,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if c, ok := g.world.NearestCrystal(); ok {
 			arrow(c.X, c.Y, colGem)
 		}
-		pad := g.world.GoalPad()
-		arrow((pad.X0+pad.X1)/2, pad.Y, colPad)
+		if c := &g.world.Cargo; l.Mode == sim.ModeCargo && !c.Attached && !c.Delivered {
+			arrow(c.X, c.Y, colGem)
+		}
+		pad, col := g.world.GoalPad(), colPad
+		if l.Mode == sim.ModeCargo && g.world.Cargo.Attached {
+			col = colGem // the goal pad has the cargo's colour
+		}
+		arrow((pad.X0+pad.X1)/2, pad.Y, col)
 	}
 
 	// Particles are tiny, so they skip antialiasing: Ebitengine then draws

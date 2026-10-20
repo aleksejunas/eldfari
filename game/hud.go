@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -120,17 +121,31 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 
 	// Top centre: level name and number.
 	g.print(screen, w.Level.Name, W/2, margin-2, title, text.AlignCenter, colShip)
-	g.print(screen, fmt.Sprintf("LEVEL %d/%d", g.lvl+1, len(g.levels)), W/2, margin+20, small, text.AlignCenter, colDim)
+	label := fmt.Sprintf("%s  ·  LEVEL %d/%d", strings.ToUpper(modeNames[g.mode]), g.lvl+1, len(g.levels[g.mode]))
+	g.print(screen, label, W/2, margin+20, small, text.AlignCenter, colDim)
 
-	// Top right: time, crystals and best time.
+	// Top right: time, crystals or cargo, and best time.
 	right := W - margin
 	g.print(screen, fmtTime(w.Time), right, margin-6, bigNum, text.AlignEnd, colShip)
 	total := len(w.Level.Crystals)
-	gemCol := colShip
-	if w.NGot == total {
-		gemCol = colGem
+	var cw float64
+	switch w.Level.Mode {
+	case sim.ModeCrystals:
+		gemCol := colShip
+		if w.NGot == total {
+			gemCol = colGem
+		}
+		cw = g.print(screen, fmt.Sprintf("%d/%d", w.NGot, total), right, margin+26, num, text.AlignEnd, gemCol)
+	case sim.ModeCargo:
+		status, col := "PICK UP", colShip
+		switch {
+		case w.Cargo.Delivered:
+			status, col = "DELIVERED", colGem
+		case w.Cargo.Attached:
+			status = "DELIVER"
+		}
+		cw = g.print(screen, status, right, margin+26, normal, text.AlignEnd, col)
 	}
-	cw := g.print(screen, fmt.Sprintf("%d/%d", w.NGot, total), right, margin+26, num, text.AlignEnd, gemCol)
 	g.diamond(screen, right-cw-12, margin+35, colGem)
 	if b := g.best.get(g.bestKey()); b > 0 {
 		g.print(screen, "BEST "+fmtTime(b), right, margin+48, small, text.AlignEnd, colDim)
@@ -139,12 +154,16 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	// Centre: a message about what to do now.
 	msg, sub, msgCol := "", "", colShip
 	switch {
+	case w.Won && w.Level.Mode == sim.ModeCargo:
+		msg, sub, msgCol = "DELIVERED!  "+fmtTime(w.Time), "R retry  ·  N next level", colGem
 	case w.Won:
 		msg, sub, msgCol = "YOU WIN!  "+fmtTime(w.Time), "R retry  ·  N next level", colGem
 	case s.State == sim.Crashed:
 		msg, sub, msgCol = "CRASHED", "R restart", colTerrain
 	case w.NGot == total && total > 0:
 		msg, sub, msgCol = "ALL CRYSTALS", "land on the start pad", colGem
+	case s.State == sim.Landed && w.Level.Mode == sim.ModeCargo && !w.Started:
+		msg, sub = "CARGO", "pick up the cargo and lower it onto the marked pad"
 	case s.State == sim.Landed:
 		msg, sub = "LANDED", "thrust to lift off"
 	}
@@ -155,7 +174,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	}
 
 	// Bottom: key help on the left, version on the right.
-	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen  ·  I fps", zoomSteps[g.zoomIdx])
+	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen  ·  M mode  ·  I fps", zoomSteps[g.zoomIdx])
 	y = H - margin - sizeSmall
 	hw := g.print(screen, help, margin, y, small, text.AlignStart, colDim)
 	if margin+hw+24+text.AdvanceAt(g.version, len(g.version), small)/g.scale > right {

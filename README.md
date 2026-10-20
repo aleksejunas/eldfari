@@ -21,8 +21,12 @@ Fly through the caves, collect every crystal and land gently back on the pad
 you started from. Land on any pad to refuel. Too fast or too tilted and you
 crash. Your time starts at liftoff.
 
+Cargo mode (`M`): fly to the cargo, it hooks on to a rope by itself, and
+lower it gently onto the marked pad. The cargo is heavy and swings.
+
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
-`N`/`P` = next/previous level, `Z` = zoom, `F` = fullscreen, `I` = FPS and
+`N`/`P` = next/previous level, `M` = game mode (crystals or cargo), `Z` = zoom,
+`F` = fullscreen, `I` = FPS and
 slowest frame (to spot hitches).
 
 If some keys do nothing, the browser is probably catching them: Vivaldi's
@@ -66,13 +70,16 @@ Both are build output and ignored by git.
   landing, crystals, win. All constants at the top.
 - `sim/level.go`: terrain as polygons, rasterized to an invisible bitmask.
   Pads.
-- `sim/levelfile.go`: JSON level format, loading and validation.
+- `sim/cargo.go`: cargo mode: rope, cargo physics, delivery.
+- `sim/levelfile.go`: JSON level format per mode, loading and validation.
 - `cmd/levelstat`: prints difficulty numbers per level (narrowest gap, route
   length); `-png dir` draws each level with its route.
-- `levels/crystals/*.json`: the levels, one folder per game mode, embedded
+- `levels/crystals/*.json`, `levels/cargo/*.json`: the levels, one folder per
+  game mode, embedded
   in the binary and sorted by the number at the start of the file name.
 - `main.go`: starts the game, nothing else.
 - `game/game.go`: Ebitengine: window, input, camera, drawing.
+- `game/cargo.go`: draws the rope, the cargo and the goal pad.
 - `game/hud.go`: the HUD (fuel, speed, time, crystals, messages), drawn with
   the Go fonts and scaled by the window height.
 - `game/fx.go`: exhaust, wreckage and refuel sparks (line segments).

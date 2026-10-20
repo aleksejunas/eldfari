@@ -66,37 +66,35 @@ gap goes down from ~7x ship height (20) to ~4x (70).
 - [ ] Every new level is play-tested by someone else (via the web version).
       Check especially fuel on Langveien
 
-## 5. Gamepad support
+## 5. Cargo on a rope (Thrust style) (done)
+
+1. [x] Substeps in the physics: 4 per frame (`Substeps` in `sim/world.go`)
+2. [x] Rope as a hard distance constraint: slack allowed, never stretches;
+       tested that the distance never exceeds L
+3. [x] Cargo mass (0.8): pulled by gravity, pulls on the ship, slows it
+4. [x] Collision for the cargo: bounces a little and slides, no damage
+5. [x] Pick-up and delivery: hooks on within L (80 px); delivered when it
+       rests calmly on the goal pad
+6. [x] Cargo mode: `levels/cargo/`, own loader (`"cargo"`, `"goal"` pad
+       name), `sim.Mode` with a `switch`
+7. [x] Cargo levels: 10 Kranen (over a hill), 20 Lageret (down a shaft into
+       a cellar, out through a tunnel), 30 Hylla (onto a high shelf)
+8. [x] Temporary key `M` to switch mode
+- [ ] Play-test the cargo levels; tune `CargoMass` and `RopeLength` in
+      `sim/cargo.go` if lifting feels too heavy
+- [ ] `cmd/levelstat` only measures crystals levels so far
+
+## 6. Mode chooser
+
+- [ ] A simple screen listing modes and levels, built now that there are two
+      modes to choose between. Replaces the temporary mode key
+
+## 7. Gamepad support
 
 Full plan: [gamepad.md](gamepad.md)
 
 - [ ] Keyboard and gamepad input merged in one `readInput()`
 - [ ] Tested on real hardware (xbox/playstation pad, Steam Deck)
-
-## 6. Cargo on a rope (Thrust style)
-
-1. [ ] Substeps in the physics (a rigid rope gets unstable at 60 Hz and can
-       tunnel through walls)
-2. [ ] Pendulum without mass and without collision: the rope is a hard
-       distance constraint (rigid first, maybe spring later), with a test
-       that the distance never exceeds L
-3. [ ] Cargo mass: the cargo is pulled by gravity and pulls on the ship, and
-       heavy cargo = slower acceleration
-4. [ ] Collision for the cargo against terrain
-5. [ ] Pick-up and delivery: the cargo rests on the ground and is attached
-       automatically when the ship is within L (60–100 px); it must be
-       delivered to the goal pad
-6. [ ] Cargo mode: `levels/cargo/` with its own loader (cargo start
-       position, goal pad), and a mode enum in `sim` with a `switch` (no
-       interface until two players show what is shared)
-7. [ ] Cargo levels designed for the rope: no narrow sloping passages,
-       playable with a pendulum hanging below the ship
-8. [ ] Temporary key to switch mode until the mode chooser exists
-
-## 7. Mode chooser
-
-- [ ] A simple screen listing modes and levels, built now that there are two
-      modes to choose between. Replaces the temporary mode key
 
 ## 8. Two players (what Turboraketti really was)
 
