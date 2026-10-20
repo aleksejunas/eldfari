@@ -32,7 +32,7 @@ func main() {
 	if flag.NArg() > 0 {
 		fsys = os.DirFS(flag.Arg(0))
 	}
-	ls, err := sim.LoadDir(fsys)
+	ls, err := sim.LoadDir(fsys, sim.ModeCrystals)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -214,10 +214,14 @@ func (w *World) NearestCrystal() (Pt, bool) {
 	return best, found
 }
 
-// GoalPad returns the pad to head for: the start pad once all crystals are taken,
-// otherwise the nearest pad (for refuelling).
+// GoalPad returns the pad to head for. Crystals mode: the start pad once all
+// crystals are taken. Cargo mode: the goal pad while the cargo hangs in the
+// rope. Otherwise the nearest pad (for refuelling).
 func (w *World) GoalPad() Pad {
-	if w.NGot == len(w.Level.Crystals) {
+	if w.Level.Mode == ModeCargo && w.Cargo.Attached {
+		return w.Level.Pads[w.Level.Goal]
+	}
+	if w.Level.Mode == ModeCrystals && w.NGot == len(w.Level.Crystals) {
 		return w.Level.Pads[0]
 	}
 	s := &w.Ship

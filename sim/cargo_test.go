@@ -172,3 +172,15 @@ func TestCrystalsModeHasNoCargo(t *testing.T) {
 		t.Error("crystals mode should never hook a cargo")
 	}
 }
+
+func TestGoalPadPointsToGoalWithCargo(t *testing.T) {
+	w := cargoWorld()
+	fly(w, 150, 300, 0, 0, 0) // nearest pad is the start pad
+	if p := w.GoalPad(); p != w.Level.Pads[0] {
+		t.Errorf("without cargo: GoalPad = %v, want the nearest pad", p)
+	}
+	w.Cargo.Attached = true
+	if p := w.GoalPad(); p != w.Level.Pads[1] {
+		t.Errorf("with cargo: GoalPad = %v, want the goal pad", p)
+	}
+}

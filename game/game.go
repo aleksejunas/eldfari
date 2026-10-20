@@ -56,7 +56,7 @@ type Game struct {
 }
 
 func newGame() *Game {
-	ls, err := sim.LoadDir(levels.Crystals)
+	ls, err := sim.LoadDir(levels.Crystals, sim.ModeCrystals)
 	if err != nil {
 		log.Fatalf("level files:\n%v", err)
 	}

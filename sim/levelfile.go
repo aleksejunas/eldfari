@@ -12,19 +12,27 @@ import (
 	"strings"
 )
 
-// Level file format (levels/*.json). Coordinates are pixels, y points down.
+// Level file format (levels/<mode>/*.json). Coordinates are pixels, y points
+// down. Every mode has these fields:
 //
 //	{
 //	  "name": "Grotta",
 //	  "size": [3200, 1400],
 //	  "polygons": [{"name": "floor", "points": [[0,1100], [320,1100], ...]}],
 //	  "pads":     [{"name": "start", "x0": 100, "x1": 240, "y": 1100}],
-//	  "crystals": [[600, 700]]
+//	  ...
 //	}
 //
-// pads[0] is the start pad: the ship spawns there, and you win by landing
-// there with all crystals taken. Everything outside the world counts as solid.
-// The polygons are filled even-odd together, so their edges must not cross.
+// Crystals mode adds "crystals": [[600, 700], ...]. You win by taking them all
+// and landing on the start pad.
+//
+// Cargo mode adds "cargo": [x, y] (where the cargo rests, its centre) and
+// "goal": "pad name" (the pad to deliver it to). Fields from another mode are
+// unknown fields, and so an error.
+//
+// pads[0] is the start pad: the ship spawns there. Everything outside the
+// world counts as solid. The polygons are filled even-odd together, so their
+// edges must not cross.
 
 const (
 	minPadWidth      = 60 // px
@@ -45,18 +53,29 @@ type padFile struct {
 	Y    float64 `json:"y"`
 }
 
-type levelFile struct {
-	Name     string       `json:"name"`
-	Size     [2]int       `json:"size"`
-	Polygons []polyFile   `json:"polygons"`
-	Pads     []padFile    `json:"pads"`
+// baseFile holds the fields every mode has.
+type baseFile struct {
+	Name     string     `json:"name"`
+	Size     [2]int     `json:"size"`
+	Polygons []polyFile `json:"polygons"`
+	Pads     []padFile  `json:"pads"`
+}
+
+type crystalsFile struct {
+	baseFile
 	Crystals [][2]float64 `json:"crystals"`
 }
 
-// LoadDir reads all *.json in fsys and validates them. File names start with
-// a number (10-grotta.json), and the levels are sorted by that number, so 100
-// comes after 90.
-func LoadDir(fsys fs.FS) ([]*Level, error) {
+type cargoFile struct {
+	baseFile
+	Cargo [2]float64 `json:"cargo"`
+	Goal  string     `json:"goal"`
+}
+
+// LoadDir reads all *.json in fsys as levels for mode and validates them. File
+// names start with a number (10-grotta.json), and the levels are sorted by
+// that number, so 100 comes after 90.
+func LoadDir(fsys fs.FS, mode Mode) ([]*Level, error) {
 	names, err := fs.Glob(fsys, "*.json")
 	if err != nil {
 		return nil, err
@@ -84,7 +103,7 @@ func LoadDir(fsys fs.FS) ([]*Level, error) {
 		if err != nil {
 			return nil, err
 		}
-		l, err := ParseLevel(data)
+		l, err := ParseLevel(data, mode)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", n, err)
 		}
@@ -104,15 +123,63 @@ func levelNumber(name string) (int, bool) {
 	return n, err == nil
 }
 
-// ParseLevel reads one level file and validates it. Unknown fields are an error,
-// so typos in keys are caught instead of silently ignored.
-func ParseLevel(data []byte) (*Level, error) {
+// ParseLevel reads one level file for mode and validates it. Unknown fields
+// are an error, so typos in keys (and fields from another mode) are caught
+// instead of silently ignored.
+func ParseLevel(data []byte, mode Mode) (*Level, error) {
+	var l *Level
+	switch mode {
+	case ModeCrystals:
+		var f crystalsFile
+		if err := decodeStrict(data, &f); err != nil {
+			return nil, err
+		}
+		var err error
+		if l, err = f.level(); err != nil {
+			return nil, err
+		}
+		for _, c := range f.Crystals {
+			l.Crystals = append(l.Crystals, Pt{c[0], c[1]})
+		}
+	case ModeCargo:
+		var f cargoFile
+		if err := decodeStrict(data, &f); err != nil {
+			return nil, err
+		}
+		var err error
+		if l, err = f.level(); err != nil {
+			return nil, err
+		}
+		l.CargoStart = Pt{f.Cargo[0], f.Cargo[1]}
+		l.Goal = -1 // checked by Validate
+		for i, p := range f.Pads {
+			if p.Name == f.Goal {
+				l.Goal = i
+				break
+			}
+		}
+		l.goalName = f.Goal
+	default:
+		return nil, fmt.Errorf("unknown mode %d", mode)
+	}
+	l.Mode = mode
+	if err := l.Validate(); err != nil {
+		return nil, err
+	}
+	return l, nil
+}
+
+func decodeStrict(data []byte, v any) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	var f levelFile
-	if err := dec.Decode(&f); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
+	if err := dec.Decode(v); err != nil {
+		return fmt.Errorf("invalid JSON: %w", err)
 	}
+	return nil
+}
+
+// level builds the terrain and pads that every mode has.
+func (f *baseFile) level() (*Level, error) {
 	w, h := f.Size[0], f.Size[1]
 	if w < 100 || h < 100 || w > maxWorldSize || h > maxWorldSize {
 		return nil, fmt.Errorf("size %v must be between 100 and %d in both directions", f.Size, maxWorldSize)
@@ -140,12 +207,6 @@ func ParseLevel(data []byte) (*Level, error) {
 	l := NewLevel(w, h, polys, pads, start)
 	l.Name = f.Name
 	l.polyNames, l.padNames = polyNames, padNames
-	for _, c := range f.Crystals {
-		l.Crystals = append(l.Crystals, Pt{c[0], c[1]})
-	}
-	if err := l.Validate(); err != nil {
-		return nil, err
-	}
 	return l, nil
 }
 
@@ -241,6 +302,25 @@ func (l *Level) Validate() error {
 		}
 	}
 
+	spawn := Ship{X: l.Start.X, Y: l.Start.Y}
+	for _, p := range spawn.contactPoints() {
+		if l.Solid(p.X, p.Y) {
+			addf("the ship spawns inside the terrain (contact point %.0f,%.0f)", p.X, p.Y)
+			break
+		}
+	}
+
+	switch l.Mode {
+	case ModeCrystals:
+		l.validateCrystals(addf, inWorld)
+	case ModeCargo:
+		l.validateCargo(addf, inWorld)
+	}
+
+	return errors.Join(errs...)
+}
+
+func (l *Level) validateCrystals(addf func(string, ...any), inWorld func(x, y float64) bool) {
 	if len(l.Crystals) == 0 {
 		addf("the level has no crystals, so it cannot be won")
 	}
@@ -260,14 +340,45 @@ func (l *Level) Validate() error {
 			}
 		}
 	}
+}
 
-	spawn := Ship{X: l.Start.X, Y: l.Start.Y}
-	for _, p := range spawn.contactPoints() {
-		if l.Solid(p.X, p.Y) {
-			addf("the ship spawns inside the terrain (contact point %.0f,%.0f)", p.X, p.Y)
-			break
-		}
+// validateCargo checks that the cargo rests on the ground, with room above it
+// for the ship to come close enough to hook it, and that the goal is a pad
+// other than the start.
+func (l *Level) validateCargo(addf func(string, ...any), inWorld func(x, y float64) bool) {
+	switch {
+	case l.Goal < 0:
+		addf("goal %q is not the name of a pad", l.goalName)
+	case l.Goal == 0:
+		addf("the goal can't be the start pad (pads[0])")
 	}
 
-	return errors.Join(errs...)
+	c := l.CargoStart
+	if !inWorld(c.X, c.Y) {
+		addf("the cargo (%.0f,%.0f) is outside the world", c.X, c.Y)
+		return
+	}
+	w := World{Level: l, Cargo: Cargo{X: c.X, Y: c.Y}}
+	if _, _, hit := w.cargoNormal(); hit || l.Solid(c.X, c.Y) {
+		addf("the cargo (%.0f,%.0f) overlaps the terrain", c.X, c.Y)
+		return
+	}
+	if !l.Solid(c.X, c.Y+CargoRadius+3) {
+		addf("the cargo (%.0f,%.0f) must rest on the ground (terrain within 3 px below it)", c.X, c.Y)
+	}
+	// Room above for the ship: as wide as the ship, up to RopeLength high.
+room:
+	for y := c.Y - CargoRadius; y >= c.Y-RopeLength; y -= 4 {
+		for _, dx := range []float64{-10, 0, 10} {
+			if l.Solid(c.X+dx, y) {
+				addf("no room above the cargo for the ship to hook it (terrain at %.0f,%.0f)", c.X+dx, y)
+				break room
+			}
+		}
+	}
+	if l.Goal > 0 {
+		if pad := l.Pads[l.Goal]; c.X >= pad.X0 && c.X <= pad.X1 && math.Abs(c.Y+CargoRadius-pad.Y) <= 2 {
+			addf("the cargo starts on the goal pad")
+		}
+	}
 }

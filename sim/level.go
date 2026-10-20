@@ -38,6 +38,7 @@ type Level struct {
 	Name      string
 	polyNames []string // only used in error messages
 	padNames  []string
+	goalName  string // cargo mode: the "goal" from the file, for error messages
 
 	mask []uint64 // one bit per pixel, row by row; see Solid
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func TestShippedLevelsLoadAndValidate(t *testing.T) {
-	ls, err := LoadDir(levels.Crystals)
+	ls, err := LoadDir(levels.Crystals, ModeCrystals)
 	if err != nil {
 		t.Fatalf("the levels are not valid:\n%v", err)
 	}
@@ -26,7 +26,7 @@ func TestShippedLevelsLoadAndValidate(t *testing.T) {
 
 // Every shipped level: the ship starts at rest on the start pad and refuels.
 func TestShippedLevelsSpawnAndRefuel(t *testing.T) {
-	ls, err := LoadDir(levels.Crystals)
+	ls, err := LoadDir(levels.Crystals, ModeCrystals)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ const (
 )
 
 func TestParseValidLevel(t *testing.T) {
-	l, err := ParseLevel([]byte(levelJSON("", okPad, okCrystals)))
+	l, err := ParseLevel([]byte(levelJSON("", okPad, okCrystals)), ModeCrystals)
 	if err != nil {
 		t.Fatalf("should be valid: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestParseRejectsBadLevels(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := ParseLevel([]byte(c.json))
+			_, err := ParseLevel([]byte(c.json), ModeCrystals)
 			if err == nil {
 				t.Fatal("should have failed")
 			}
@@ -140,7 +140,7 @@ func TestParseRejectsBadLevels(t *testing.T) {
 // All problems should be reported together, not just the first one.
 func TestValidateReportsAllProblems(t *testing.T) {
 	bad := levelJSON("", `{"name": "narrow", "x0": 100, "x1": 140, "y": 500}`, `[[400, 550]]`)
-	_, err := ParseLevel([]byte(bad))
+	_, err := ParseLevel([]byte(bad), ModeCrystals)
 	if err == nil {
 		t.Fatal("should have failed")
 	}
@@ -162,7 +162,7 @@ func TestLoadDirSortsByNumber(t *testing.T) {
 		"20-b.json":  level("b"),
 		"10-a.json":  level("a"),
 	}
-	ls, err := LoadDir(fsys)
+	ls, err := LoadDir(fsys, ModeCrystals)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,10 +187,87 @@ func TestLoadDirRejectsBadFileNames(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := LoadDir(c.fsys)
+			_, err := LoadDir(c.fsys, ModeCrystals)
 			if err == nil || !strings.Contains(err.Error(), c.want) {
 				t.Errorf("err = %v, want it to contain %q", err, c.want)
 			}
 		})
+	}
+}
+
+// A small, valid cargo level: floor at y=500, start pad 100..250, goal pad
+// "depot" 500..650, cargo resting on the floor at x=350.
+func cargoJSON(polyExtra, cargo, goal string) string {
+	return fmt.Sprintf(`{
+  "name": "cargo test",
+  "size": [800, 600],
+  "polygons": [
+    {"name": "floor", "points": [[0,500],[800,500],[800,600],[0,600]]}%s
+  ],
+  "pads": [
+    {"name": "start", "x0": 100, "x1": 250, "y": 500},
+    {"name": "depot", "x0": 500, "x1": 650, "y": 500}
+  ],
+  "cargo": %s,
+  "goal": %s
+}`, polyExtra, cargo, goal)
+}
+
+const (
+	okCargo = `[350, 491.5]`
+	okGoal  = `"depot"`
+)
+
+func TestParseValidCargoLevel(t *testing.T) {
+	l, err := ParseLevel([]byte(cargoJSON("", okCargo, okGoal)), ModeCargo)
+	if err != nil {
+		t.Fatalf("should be valid: %v", err)
+	}
+	if l.Mode != ModeCargo || l.Goal != 1 || l.CargoStart != (Pt{350, 491.5}) {
+		t.Errorf("mode=%v goal=%d cargo=%v", l.Mode, l.Goal, l.CargoStart)
+	}
+	w := NewWorld(l)
+	if w.Cargo.X != 350 || w.Cargo.Attached {
+		t.Errorf("the world should start with the cargo resting at its start: %+v", w.Cargo)
+	}
+}
+
+func TestParseRejectsBadCargoLevels(t *testing.T) {
+	cases := []struct {
+		name string
+		json string
+		want string
+	}{
+		{"cargo inside the terrain", cargoJSON("", `[350, 520]`, okGoal), "overlaps the terrain"},
+		{"cargo floating", cargoJSON("", `[350, 400]`, okGoal), "rest on the ground"},
+		{
+			"no room above the cargo",
+			cargoJSON(`, {"name": "roof", "points": [[300,470],[400,470],[400,450],[300,450]]}`, okCargo, okGoal),
+			"no room above",
+		},
+		{"goal is not a pad", cargoJSON("", okCargo, `"nowhere"`), "not the name of a pad"},
+		{"goal is the start pad", cargoJSON("", okCargo, `"start"`), "start pad"},
+		{"cargo starts on the goal", cargoJSON("", `[575, 491.5]`, okGoal), "starts on the goal pad"},
+		{
+			"crystals in a cargo level",
+			strings.Replace(cargoJSON("", okCargo, okGoal), `"goal"`, `"crystals": [[400, 300]], "goal"`, 1),
+			"crystals",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := ParseLevel([]byte(c.json), ModeCargo)
+			if err == nil || !strings.Contains(err.Error(), c.want) {
+				t.Errorf("err = %v, want it to contain %q", err, c.want)
+			}
+		})
+	}
+}
+
+func TestCrystalsLevelRejectsCargoFields(t *testing.T) {
+	json := strings.Replace(levelJSON("", okPad, okCrystals), `"crystals"`, `"cargo": [350, 491.5], "crystals"`, 1)
+	_, err := ParseLevel([]byte(json), ModeCrystals)
+	if err == nil || !strings.Contains(err.Error(), "cargo") {
+		t.Errorf("err = %v, a crystals level must not have a cargo", err)
 	}
 }
