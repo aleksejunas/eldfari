@@ -273,3 +273,18 @@ func TestResetClearsProgress(t *testing.T) {
 			w.NGot, w.Got, w.Time, w.Started, w.Won)
 	}
 }
+
+// A fast ship must not pass through a thin wall. At 1200 px/s the ship moves
+// 20 px per step, further than the gaps between its contact points, so
+// without substeps it would skip the 6 px wall.
+func TestFastShipHitsThinWall(t *testing.T) {
+	floor := []Pt{{0, 500}, {400, 500}, {400, 600}, {0, 600}}
+	wall := []Pt{{200, 0}, {206, 0}, {206, 500}, {200, 500}}
+	l := NewLevel(400, 600, [][]Pt{floor, wall}, []Pad{{20, 120, 500}}, Pt{70, 500 - ShipRear - 0.5})
+	w := NewWorld(l)
+	fly(w, 155, 300, 1200, 0, math.Pi/2) // nose to the right
+	run(w, 10, Input{})
+	if w.Ship.State != Crashed || w.Ship.X > 206 {
+		t.Errorf("state=%v x=%.1f, the ship should crash into the wall at x=200", w.Ship.State, w.Ship.X)
+	}
+}

@@ -6,6 +6,10 @@ import "math"
 const (
 	Dt = 1.0 / 60 // fixed time step; Ebitengine runs Update 60 times per second
 
+	// Substeps splits each Dt into smaller physics steps, so a fast ship can't
+	// pass through thin walls and the rope stays stable.
+	Substeps = 4
+
 	Gravity  = 120.0 // px/s²
 	Thrust   = 360.0 // force; acceleration = Thrust / mass
 	TurnRate = 2.4   // rad/s
@@ -124,11 +128,23 @@ func (w *World) Step(in Input) {
 		}
 	}
 
+	for range Substeps {
+		w.substep(in, Dt/Substeps)
+		if s.State != Flying || w.Won {
+			return // landed or crashed: the rest of the step is not needed
+		}
+	}
+}
+
+// substep moves the ship h seconds: rotation, thrust, gravity, drag, then
+// pickup and collision.
+func (w *World) substep(in Input, h float64) {
+	s := &w.Ship
 	if in.Left {
-		s.Angle -= TurnRate * Dt
+		s.Angle -= TurnRate * h
 	}
 	if in.Right {
-		s.Angle += TurnRate * Dt
+		s.Angle += TurnRate * h
 	}
 
 	ax, ay := 0.0, Gravity
@@ -137,17 +153,17 @@ func (w *World) Step(in Input) {
 		sin, cos := math.Sincos(s.Angle)
 		ax += sin * a
 		ay -= cos * a
-		s.Fuel = max(0, s.Fuel-BurnRate*Dt)
+		s.Fuel = max(0, s.Fuel-BurnRate*h)
 		s.Thrusting = true
 	}
 
-	s.VX += ax * Dt
-	s.VY += ay * Dt
-	k := 1 - Drag*Dt
+	s.VX += ax * h
+	s.VY += ay * h
+	k := 1 - Drag*h
 	s.VX *= k
 	s.VY *= k
-	s.X += s.VX * Dt
-	s.Y += s.VY * Dt
+	s.X += s.VX * h
+	s.Y += s.VY * h
 
 	w.pickup() // before collision, so the last crystal counts when landing in the same step
 	w.collide()
