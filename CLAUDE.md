@@ -41,9 +41,12 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
 - Pads refuel the ship while it stands on them.
 - 4 substeps per frame (`Substeps`), so fast movement and the rope stay
   stable.
-- Cargo: rope 80 px, slack allowed, never stretches; cargo mass 0.8; hooks on
-  within the rope length; bounces without damage; delivered when it rests
-  calmly on the goal pad.
+- Cargo (`sim/cargo.go`): hooks on within 120 px (a dashed ring shows it),
+  a winch reels the rope in to 80 px. The rope can go slack; tight, it is a
+  stiff damped spring (max 10 px stretch), and the swing is damped a little.
+  Cargo mass 0.4. Bounces without damage; delivered when it rests calmly on
+  the goal pad. `TestCargoLevelsAreDeliverable` flies every cargo level with
+  a simple autopilot: a new cargo level needs a route there.
 
 ## Terrain
 

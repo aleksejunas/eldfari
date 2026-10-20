@@ -21,8 +21,9 @@ Fly through the caves, collect every crystal and land gently back on the pad
 you started from. Land on any pad to refuel. Too fast or too tilted and you
 crash. Your time starts at liftoff.
 
-Cargo mode: fly to the cargo, it hooks on to a rope by itself, and
-lower it gently onto the marked pad. The cargo is heavy and swings.
+Cargo mode: fly inside the dashed ring around the cargo, it hooks on to a
+rope by itself, and lower it gently onto the marked pad. The cargo swings,
+so move smoothly.
 
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
 `N`/`P` = next/previous level, `M`/`Esc` = menu (mode and level), `Z` = zoom,

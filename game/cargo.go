@@ -21,6 +21,17 @@ func (g *Game) drawCargo(ln func(x0, y0, x1, y1, w float64, c color.RGBA)) {
 		ln(mx, my+2, mx+8, my-6, 2, colGem)
 	}
 
+	// Before it is hooked: a dashed ring around the cargo shows how close the
+	// ship must come.
+	if !c.Attached && !c.Delivered {
+		const n = 32
+		for i := 0; i < n; i += 2 {
+			a0, a1 := float64(i)*2*math.Pi/n, float64(i+1)*2*math.Pi/n
+			r := sim.HookRange
+			ln(c.X+r*math.Cos(a0), c.Y+r*math.Sin(a0), c.X+r*math.Cos(a1), c.Y+r*math.Sin(a1), 1, colDim)
+		}
+	}
+
 	// The rope goes from the rear of the ship to the edge of the cargo. When
 	// it is slack it sags in the middle.
 	if c.Attached && s.State != sim.Crashed {
@@ -31,8 +42,8 @@ func (g *Game) drawCargo(ln func(x0, y0, x1, y1, w float64, c color.RGBA)) {
 			ex, ey = c.X+(top.X-c.X)/dd*sim.CargoRadius, c.Y+(top.Y-c.Y)/dd*sim.CargoRadius
 		}
 		sag := 0.0
-		if d < sim.RopeLength {
-			sag = math.Sqrt(sim.RopeLength*sim.RopeLength-d*d) / 2
+		if l := c.RopeLen(); d < l {
+			sag = math.Sqrt(l*l-d*d) / 2
 		}
 		mx, my := (top.X+ex)/2, (top.Y+ey)/2+sag
 		ln(top.X, top.Y, mx, my, 1, colShip)

@@ -2,16 +2,24 @@ package sim
 
 import "math"
 
-// Cargo mode: fly to the cargo, it hooks on to a rope automatically, and you
-// deliver it to the goal pad. The rope can go slack but never stretches, so a
-// swinging, heavy cargo pulls the ship around.
+// Cargo mode: fly to within HookRange of the cargo, it hooks on to a rope
+// automatically (a winch reels it in to RopeLength), and you deliver it to
+// the goal pad. The rope can go slack. When it is tight it acts
+// as a stiff, damped spring, so pulling the cargo up is a firm tug rather
+// than a jolt, and it never stretches more than MaxStretch.
 const (
-	RopeLength    = 80.0 // px; the cargo hooks on when the ship is this close
-	CargoMass     = 0.8  // compare: an empty ship is BaseMass (1), a full one 1.6
-	CargoRadius   = 8.0  // px
-	CargoBounce   = 0.3  // share of the speed into a wall that bounces back
-	CargoFriction = 0.8  // share of the speed along a wall kept at each touch
-	DeliverSpeed  = 40.0 // px/s: the cargo must be this calm on the goal pad
+	RopeLength    = 80.0  // px, once reeled in
+	HookRange     = 120.0 // px from the ship's centre to the cargo's: it hooks on
+	ReelSpeed     = 60.0  // px/s the winch shortens a longer rope to RopeLength
+	RopeStiffness = 40.0  // pull per px of stretch (mass × px/s²); the cargo sags ~1 px
+	RopeDamping   = 5.0   // pull per px/s that the ends move apart; stops bouncing
+	MaxStretch    = 10.0  // px; beyond this the rope is a hard limit
+	SwingDamping  = 0.4   // 1/s; slows the cargo's swing across the rope, so it settles
+	CargoMass     = 0.4   // compare: an empty ship is BaseMass (1), a full one 1.6
+	CargoRadius   = 8.0   // px
+	CargoBounce   = 0.3   // share of the speed into a wall that bounces back
+	CargoFriction = 0.8   // share of the speed along a wall kept at each touch
+	DeliverSpeed  = 40.0  // px/s: the cargo must be this calm on the goal pad
 )
 
 // Cargo is the load that hangs in the rope under the ship.
@@ -19,7 +27,12 @@ type Cargo struct {
 	X, Y, VX, VY float64
 	Attached     bool // hooked to the ship; stays hooked until delivered
 	Delivered    bool
+	Rope         float64 // current rope length while reeling in; see ropeLength
 }
+
+// RopeLen is the rope's current length: from the hook distance down to
+// RopeLength as the winch reels it in.
+func (c *Cargo) RopeLen() float64 { return max(c.Rope, RopeLength) }
 
 // moveCargo moves the cargo h seconds: hooking on, gravity, terrain, the rope
 // and delivery. shipFixed is true while the ship stands on a pad, so the rope
@@ -31,11 +44,12 @@ func (w *World) moveCargo(h float64, shipFixed bool) {
 	}
 	if !c.Attached {
 		// The cargo rests where it is until the ship comes close enough.
-		if math.Hypot(c.X-s.X, c.Y-s.Y) <= RopeLength {
-			c.Attached = true
+		if d := math.Hypot(c.X-s.X, c.Y-s.Y); d <= HookRange {
+			c.Attached, c.Rope = true, d
 		}
 		return
 	}
+	c.Rope = max(RopeLength, c.Rope-ReelSpeed*h)
 
 	px, py := c.X, c.Y
 	c.VY += Gravity * h
@@ -45,7 +59,7 @@ func (w *World) moveCargo(h float64, shipFixed bool) {
 	c.X += c.VX * h
 	c.Y += c.VY * h
 	touching := w.collideCargo(px, py)
-	w.rope(shipFixed)
+	w.rope(h, shipFixed)
 
 	if touching && w.onGoalPad() && math.Hypot(c.VX, c.VY) <= DeliverSpeed {
 		c.Delivered, c.Attached = true, false
@@ -54,14 +68,15 @@ func (w *World) moveCargo(h float64, shipFixed bool) {
 	}
 }
 
-// rope keeps the cargo within RopeLength of the ship. If it is too far away,
-// both ends are pulled together (the lighter one moves more), and the speed
-// that pulls them apart is removed in the same way. A slack rope does nothing.
-func (w *World) rope(shipFixed bool) {
+// rope pulls the ship and the cargo together when the rope is tight: a
+// spring with damping, shared by inverse mass (the lighter end moves more).
+// A slack rope does nothing. Beyond RopeLength + MaxStretch it is a hard
+// limit. While tight, the cargo's swing across the rope is damped a little.
+func (w *World) rope(h float64, shipFixed bool) {
 	c, s := &w.Cargo, &w.Ship
 	dx, dy := c.X-s.X, c.Y-s.Y
-	d := math.Hypot(dx, dy)
-	if d <= RopeLength {
+	d, length := math.Hypot(dx, dy), c.RopeLen()
+	if d <= length {
 		return
 	}
 	nx, ny := dx/d, dy/d // from the ship towards the cargo
@@ -71,19 +86,37 @@ func (w *World) rope(shipFixed bool) {
 	if shipFixed {
 		ws = 0
 	}
-	stretch := (d - RopeLength) / (ws + wc)
-	s.X += nx * stretch * ws
-	s.Y += ny * stretch * ws
-	c.X -= nx * stretch * wc
-	c.Y -= ny * stretch * wc
 
-	if apart := (c.VX-s.VX)*nx + (c.VY-s.VY)*ny; apart > 0 {
-		j := apart / (ws + wc)
-		s.VX += nx * j * ws
-		s.VY += ny * j * ws
-		c.VX -= nx * j * wc
-		c.VY -= ny * j * wc
+	apart := (c.VX-s.VX)*nx + (c.VY-s.VY)*ny // speed the ends move apart
+	if pull := RopeStiffness*(d-length) + RopeDamping*apart; pull > 0 {
+		s.VX += nx * pull * ws * h
+		s.VY += ny * pull * ws * h
+		c.VX -= nx * pull * wc * h
+		c.VY -= ny * pull * wc * h
 	}
+
+	if over := d - length - MaxStretch; over > 0 {
+		share := over / (ws + wc)
+		s.X += nx * share * ws
+		s.Y += ny * share * ws
+		c.X -= nx * share * wc
+		c.Y -= ny * share * wc
+		if apart := (c.VX-s.VX)*nx + (c.VY-s.VY)*ny; apart > 0 {
+			j := apart / (ws + wc)
+			s.VX += nx * j * ws
+			s.VY += ny * j * ws
+			c.VX -= nx * j * wc
+			c.VY -= ny * j * wc
+		}
+	}
+
+	// Swing damping: slow the cargo's speed across the rope, relative to the
+	// ship.
+	rvx, rvy := c.VX-s.VX, c.VY-s.VY
+	along := rvx*nx + rvy*ny
+	k := SwingDamping * h
+	c.VX -= (rvx - along*nx) * k
+	c.VY -= (rvy - along*ny) * k
 }
 
 // collideCargo keeps the cargo out of the terrain. If it has moved into it,

@@ -28,21 +28,26 @@ func ropeLength(w *World) float64 { return math.Hypot(w.Cargo.X-w.Ship.X, w.Carg
 
 func TestCargoHooksOnWhenClose(t *testing.T) {
 	w := cargoWorld()
-	fly(w, 300, 500-CargoRadius-RopeLength-20, 0, 0, 0) // 20 px too far
+	fly(w, 300, w.Cargo.Y-HookRange-20, 0, 0, 0) // 20 px too far
 	w.Step(Input{Thrust: true})
 	if w.Cargo.Attached {
 		t.Fatal("the cargo hooked on from too far away")
 	}
-	fly(w, 300, 500-CargoRadius-RopeLength+10, 0, 0, 0)
+	fly(w, 300, w.Cargo.Y-HookRange+10, 0, 0, 0)
 	w.Step(Input{Thrust: true})
 	if !w.Cargo.Attached {
-		t.Error("the cargo should hook on within RopeLength")
+		t.Fatal("the cargo should hook on within HookRange")
+	}
+	// The winch reels the rope in to RopeLength, lifting the cargo.
+	run(w, 60, Input{Thrust: true})
+	if l := w.Cargo.RopeLen(); l != RopeLength {
+		t.Errorf("rope length after 1 s = %.1f, want %v", l, RopeLength)
 	}
 }
 
-// The rope never stretches, whatever the ship does. A big empty world, so the
-// test flight doesn't hit anything.
-func TestRopeNeverLongerThanL(t *testing.T) {
+// The rope never stretches more than MaxStretch, whatever the ship does. A big
+// empty world, so the test flight doesn't hit anything.
+func TestRopeNeverOverstretched(t *testing.T) {
 	floor := []Pt{{0, 3900}, {4000, 3900}, {4000, 4000}, {0, 4000}}
 	l := NewLevel(4000, 4000, [][]Pt{floor}, []Pad{{20, 120, 3900}}, Pt{70, 3900 - ShipRear - 0.5})
 	l.Mode = ModeCargo
@@ -58,8 +63,8 @@ func TestRopeNeverLongerThanL(t *testing.T) {
 			t.Fatalf("frame %d: ship state %v at (%.0f,%.0f), the test flight should stay in the air",
 				i, w.Ship.State, w.Ship.X, w.Ship.Y)
 		}
-		if d := ropeLength(w); d > RopeLength+1e-6 {
-			t.Fatalf("frame %d: rope is %.3f px, longer than %v", i, d, RopeLength)
+		if d := ropeLength(w); d > RopeLength+MaxStretch+1e-6 {
+			t.Fatalf("frame %d: rope is %.3f px, longer than %v", i, d, RopeLength+MaxStretch)
 		}
 	}
 }
@@ -155,7 +160,7 @@ func TestCargoSettlesWhileLanded(t *testing.T) {
 	if s.State != Landed || s.X != sx || s.Y != sy {
 		t.Errorf("state=%v at (%.1f,%.1f), the ship should stay on the pad", s.State, s.X, s.Y)
 	}
-	if d := ropeLength(w); d > RopeLength+1e-6 {
+	if d := ropeLength(w); d > RopeLength+MaxStretch+1e-6 {
 		t.Errorf("rope is %.2f px", d)
 	}
 	if math.Hypot(w.Cargo.VX, w.Cargo.VY) > 5 {
@@ -182,5 +187,56 @@ func TestGoalPadPointsToGoalWithCargo(t *testing.T) {
 	w.Cargo.Attached = true
 	if p := w.GoalPad(); p != w.Level.Pads[1] {
 		t.Errorf("with cargo: GoalPad = %v, want the goal pad", p)
+	}
+}
+
+// Playability: with a full tank and the cargo hanging, the ship must still
+// climb clearly while tilted 30° to fly sideways. With CargoMass 0.8 it only
+// had ~11 px/s² to spare and sank as soon as it tilted.
+func TestLoadedShipClimbsWhenTilted(t *testing.T) {
+	floor := []Pt{{0, 3900}, {4000, 3900}, {4000, 4000}, {0, 4000}}
+	l := NewLevel(4000, 4000, [][]Pt{floor}, []Pad{{20, 120, 3900}}, Pt{70, 3900 - ShipRear - 0.5})
+	l.Mode = ModeCargo
+	w := NewWorld(l)
+	w.Cargo.X = 2000
+	hook(w, 2000)
+	w.Ship.Angle = math.Pi / 6
+	run(w, 60, Input{Thrust: true})
+	if w.Ship.VY > -25 {
+		t.Errorf("VY after 1 s = %.1f, want a clear climb (below -25 px/s)", w.Ship.VY)
+	}
+}
+
+// Playability: when the rope goes tight under a rising ship, the ship slows
+// over several frames instead of being stopped in one.
+func TestRopeTugIsSoft(t *testing.T) {
+	w := cargoWorld()
+	c := &w.Cargo
+	fly(w, c.X, c.Y-RopeLength, 0, -150, 0) // rising fast, rope just tight
+	c.Attached = true
+	prev := w.Ship.VY
+	for i := range 20 {
+		w.Step(Input{Thrust: true})
+		if jump := w.Ship.VY - prev; jump > 25 {
+			t.Fatalf("frame %d: the ship's VY jumped by %.1f px/s in one frame", i, jump)
+		}
+		prev = w.Ship.VY
+	}
+	if !c.Attached || c.Y >= w.Level.CargoStart.Y-1 {
+		t.Errorf("the cargo should have been lifted off the ground (y=%.1f)", c.Y)
+	}
+}
+
+// Playability: a swinging cargo settles within a few seconds. Air drag alone
+// would leave it swinging about 45 px to the side after 8 s.
+func TestSwingSettles(t *testing.T) {
+	w := cargoWorld()
+	hook(w, 200)
+	w.Cargo.X, w.Cargo.Y = w.Ship.X+RopeLength, w.Ship.Y // rope horizontal
+	for range 8 * 60 * Substeps {                        // 8 s with the ship held still
+		w.moveCargo(Dt/Substeps, true)
+	}
+	if dx := math.Abs(w.Cargo.X - w.Ship.X); dx > 15 {
+		t.Errorf("after 8 s the cargo is still %.0f px to the side", dx)
 	}
 }
