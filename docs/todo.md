@@ -44,22 +44,27 @@ another mode's levels.
 
 ## 4. New crystals levels
 
-The ship is about 21 px tall. Level 30 is around 6x ship height at its
-narrowest point, and the ramp goes down towards ~4x. One new difficulty per
-level.
+The ship is about 21 px tall. One new difficulty per level, and the narrowest
+gap goes down from ~7x ship height (20) to ~4x (70).
 
-- [ ] Analysis first: a small Go tool that computes the minimum clearance
-      along the route and the route length per level, as difficulty numbers
-- [ ] Run it on 10, 20 and 70 to check the ramp below against real numbers
-- [ ] Ramp:
-  - 10 Grotta: open (exists)
-  - 20 Passasjen: passages ~180 px (exists)
-  - [ ] 30 (new): one narrower passage (~130 px), more pads
-  - [ ] 40 (new): short low passage (~250 px) + stalactites
-  - [ ] 50 (new): longer routes, fuel planning
-  - [ ] 60 (new): one wide sloping passage (160 px+) as practice
-  - 70 Dypet: narrow passages, sloping tunnel, long route (exists)
-- [ ] Every new level is play-tested by someone else (via the web version)
+- [x] Analysis first: `go run ./cmd/levelstat` prints the narrowest gap the
+      route must pass and the route length per level (`-png dir` draws them)
+- [x] Run it on 10, 20 and 70: Passasjen is 144 px at its narrowest (under
+      the pillar), not ~180, so the ramp below starts from there
+- [x] Ramp (narrowest gap, route length):
+  - 10 Grotta: open, 272 px, 6.6k px
+  - 20 Passasjen: 144 px (6.9x), 6.9k px
+  - [x] 30 Sprekken: one 130 px crack between two halls, five pads:
+        128 px (6.1x), 8.1k px
+  - [x] 40 Dryppet: short low passage (250 px long) + stalactites:
+        112 px (5.3x), 8.1k px
+  - [x] 50 Langveien: long snake, refuel halfway: 104 px (5.0x), 14.2k px
+  - [x] 60 Sjakta: one wide sloping shaft (168 px) as practice, then a low
+        passage: 96 px (4.6x), 8.5k px
+  - 70 Dypet: narrow passages, sloping tunnel, long route: 79 px (3.7x),
+    8.3k px
+- [ ] Every new level is play-tested by someone else (via the web version).
+      Check especially fuel on Langveien
 
 ## 5. Gamepad support
 

@@ -9,6 +9,7 @@ crystals. Two players come later.
 go run .          # play
 go test ./...     # must be green before commit
 go vet ./...
+go run ./cmd/levelstat   # narrowest gap + route length per level
 ```
 
 ## Architecture
@@ -53,9 +54,11 @@ Everything outside the world is solid.
   all problems are reported together (crossing edges, narrow/floating pads,
   clearance above pads and around crystals, spawn). `pads[0]` is start and
   goal. `TestShippedLevelsLoadAndValidate` checks them all.
-- Crystals levels: 10 Grotta (intro), 20 Passasjen (gentle step up), 70 Dypet
-  (hard, narrow passages); 30–60 are planned. If a level is too hard, tune it.
-  Level names are proper names and stay Norwegian.
+- Crystals levels, easy to hard: 10 Grotta, 20 Passasjen, 30 Sprekken, 40
+  Dryppet, 50 Langveien, 60 Sjakta, 70 Dypet. The narrowest gap goes from
+  ~7x ship height (Passasjen, 144 px) down to ~4x (Dypet, 79 px). Check a new
+  or changed level with `go run ./cmd/levelstat`. If a level is too hard,
+  tune it. Level names are proper names and stay Norwegian.
 - Best times are keyed by mode and level name (`crystals/Grotta`).
 
 ## Conventions
@@ -77,9 +80,9 @@ they will be done:
 
 1. Done: browser build with intro page and best times in localStorage;
    levels in one folder per mode.
-2. Next: new crystals levels 30–60 (analysis tool first: minimum clearance and
-   route length per level).
-3. Gamepad (`docs/gamepad.md`).
+2. Done: crystals levels 30–60 and `cmd/levelstat`; they still need
+   play-testing by someone else.
+3. Next: gamepad (`docs/gamepad.md`).
 4. Cargo on a rope: substeps first, then pendulum, mass, collision,
    delivery, cargo mode.
 5. Mode chooser (once there are two modes).

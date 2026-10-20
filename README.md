@@ -66,6 +66,8 @@ Both are build output and ignored by git.
 - `sim/level.go`: terrain as polygons, rasterized to an invisible bitmask.
   Pads.
 - `sim/levelfile.go`: JSON level format, loading and validation.
+- `cmd/levelstat`: prints difficulty numbers per level (narrowest gap, route
+  length); `-png dir` draws each level with its route.
 - `levels/crystals/*.json`: the levels, one folder per game mode, embedded
   in the binary and sorted by the number at the start of the file name.
 - `main.go`: starts the game, nothing else.
