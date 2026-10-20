@@ -37,7 +37,6 @@ Keyboard keeps working exactly as before. No touch support: see README.
 
 ### Hardware (needs a controller)
 
-
 - [ ] Check stick drift does not cause ghost rotation
 - [ ] Steam Deck
 

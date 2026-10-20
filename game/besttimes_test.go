@@ -1,3 +1,5 @@
+//go:build !js
+
 package game
 
 import (
@@ -24,8 +26,8 @@ func TestBestTimesCorruptFile(t *testing.T) {
 
 func TestBestTimesRecordAndReload(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "raketti", "best.json") // dir doesn't exist yet
-	b := &bestTimes{path: path, times: map[string]float64{}}
-
+	save := func(times map[string]float64) error { return writeBestTimes(path, times) }
+	b := &bestTimes{times: map[string]float64{}, save: save}
 	b.record("Grotta", 40)
 	b.record("Grotta", 50) // slower: ignored
 	b.record("Grotta", 35) // faster: kept

@@ -19,8 +19,7 @@ but does not edit files.
       `index.html`
 - [x] Host on GitHub Pages (static, a GitHub Actions workflow that builds
       and deploys)
-- [ ] Best times in the browser (no config dir there: use localStorage or
-      keep in memory)
+- [x] Best times in the browser (localStorage, `game/besttimes_js.go`)
 - [ ] Short instructions for a non-developer: link, keys, what the goal is
 
 ## 3. Levels: one folder per mode
