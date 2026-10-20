@@ -178,7 +178,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// ln draws a world line segment: offset by the camera, scaled by zoom.
 	// Line width follows zoom, but a bit weaker so it doesn't get chunky.
-	ln := func(x0, y0, x1, y1, w float64, c color.Color) {
+	ln := func(x0, y0, x1, y1, w float64, c color.RGBA) {
 		line(screen, (x0-g.camX)*z, (y0-g.camY)*z, (x1-g.camX)*z, (y1-g.camY)*z, w*z*0.75, c)
 	}
 
@@ -226,7 +226,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Arrows on a ring around the ship towards targets that are off screen:
 	// the nearest crystal, and the pad to head for.
 	vw, vh := float64(g.w)/z, float64(g.h)/z
-	arrow := func(tx, ty float64, c color.Color) {
+	arrow := func(tx, ty float64, c color.RGBA) {
 		if tx > g.camX && tx < g.camX+vw && ty > g.camY && ty < g.camY+vh {
 			return
 		}
@@ -248,10 +248,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		arrow((pad.X0+pad.X1)/2, pad.Y, colPad)
 	}
 
+	// Particles are tiny, so they skip antialiasing: Ebitengine then draws
+	// them all in one batch.
 	for _, p := range g.parts {
 		dx, dy := math.Cos(p.ang)*p.length/2, math.Sin(p.ang)*p.length/2
+		x0, y0 := (p.x-dx-g.camX)*z, (p.y-dy-g.camY)*z
+		x1, y1 := (p.x+dx-g.camX)*z, (p.y+dy-g.camY)*z
 		c := fade(p.col, p.life/p.maxLife)
-		ln(p.x-dx, p.y-dy, p.x+dx, p.y+dy, 2, c)
+		vector.StrokeLine(screen, float32(x0), float32(y0), float32(x1), float32(y1), float32(1.5*z), c, false)
 	}
 
 	g.drawHUD(screen)
