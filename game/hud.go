@@ -104,6 +104,20 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	x += g.print(screen, "VY ", x, y, small, text.AlignStart, colDim)
 	g.print(screen, fmt.Sprintf("%+4.0f", s.VY), x, y-2, num, text.AlignStart, speedCol(s.VY, sim.MaxLandVY))
 
+	// FPS overlay (key I): the slowest frame of the last second turns red
+	// when it is longer than two frames at 60 Hz.
+	if g.showFPS {
+		y += 22
+		worst := g.fps.shown.Seconds() * 1000
+		col := colShip
+		if worst > 33 {
+			col = colTerrain
+		}
+		x = margin + g.print(screen, fmt.Sprintf("FPS %.0f  TPS %.0f  ", ebiten.ActualFPS(), ebiten.ActualTPS()),
+			margin, y, small, text.AlignStart, colDim)
+		g.print(screen, fmt.Sprintf("WORST %.0f MS", worst), x, y, small, text.AlignStart, col)
+	}
+
 	// Top centre: level name and number.
 	g.print(screen, w.Level.Name, W/2, margin-2, title, text.AlignCenter, colShip)
 	g.print(screen, fmt.Sprintf("LEVEL %d/%d", g.lvl+1, len(g.levels)), W/2, margin+20, small, text.AlignCenter, colDim)
@@ -141,7 +155,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	}
 
 	// Bottom: key help on the left, version on the right.
-	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen", zoomSteps[g.zoomIdx])
+	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen  ·  I fps", zoomSteps[g.zoomIdx])
 	y = H - margin - sizeSmall
 	hw := g.print(screen, help, margin, y, small, text.AlignStart, colDim)
 	if margin+hw+24+text.AdvanceAt(g.version, len(g.version), small)/g.scale > right {

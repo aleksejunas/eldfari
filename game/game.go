@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -50,6 +51,8 @@ type Game struct {
 	mode    string // folder in levels/; only "crystals" for now
 	version string
 	wasWon  bool
+	showFPS bool // FPS overlay, toggled with I
+	fps     fpsMeter
 }
 
 func newGame() *Game {
@@ -127,6 +130,9 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
+		g.showFPS = !g.showFPS
+	}
 
 	in := sim.Input{
 		Left:   ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA),
@@ -171,6 +177,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	g.fps.frame(time.Now())
 	screen.Fill(colBG)
 	l := g.world.Level
 	s := &g.world.Ship

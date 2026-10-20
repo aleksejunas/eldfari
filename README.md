@@ -22,7 +22,8 @@ you started from. Land on any pad to refuel. Too fast or too tilted and you
 crash. Your time starts at liftoff.
 
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
-`N`/`P` = next/previous level, `Z` = zoom, `F` = fullscreen.
+`N`/`P` = next/previous level, `Z` = zoom, `F` = fullscreen, `I` = FPS and
+slowest frame (to spot hitches).
 
 If some keys do nothing, the browser is probably catching them: Vivaldi's
 single-key shortcuts or a Vim-style extension (Vimium etc.). Turn those off
