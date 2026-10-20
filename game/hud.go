@@ -155,9 +155,9 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	msg, sub, msgCol := "", "", colShip
 	switch {
 	case w.Won && w.Level.Mode == sim.ModeCargo:
-		msg, sub, msgCol = "DELIVERED!  "+fmtTime(w.Time), "R retry  ·  N next level", colGem
+		msg, sub, msgCol = "DELIVERED!  "+fmtTime(w.Time), "R retry  ·  N next level  ·  M menu", colGem
 	case w.Won:
-		msg, sub, msgCol = "YOU WIN!  "+fmtTime(w.Time), "R retry  ·  N next level", colGem
+		msg, sub, msgCol = "YOU WIN!  "+fmtTime(w.Time), "R retry  ·  N next level  ·  M menu", colGem
 	case s.State == sim.Crashed:
 		msg, sub, msgCol = "CRASHED", "R restart", colTerrain
 	case w.NGot == total && total > 0:
@@ -174,7 +174,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	}
 
 	// Bottom: key help on the left, version on the right.
-	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen  ·  M mode  ·  I fps", zoomSteps[g.zoomIdx])
+	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen  ·  I fps  ·  M menu", zoomSteps[g.zoomIdx])
 	y = H - margin - sizeSmall
 	hw := g.print(screen, help, margin, y, small, text.AlignStart, colDim)
 	if margin+hw+24+text.AdvanceAt(g.version, len(g.version), small)/g.scale > right {

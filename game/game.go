@@ -56,6 +56,9 @@ type Game struct {
 	wasWon  bool
 	showFPS bool // FPS overlay, toggled with I
 	fps     fpsMeter
+
+	inMenu bool // the mode and level chooser is shown instead of the game
+	menu   menu
 }
 
 func newGame() *Game {
@@ -77,6 +80,7 @@ func newGame() *Game {
 		version: version(),
 	}
 	g.setLevel(0)
+	g.openMenu()
 	return g
 }
 
@@ -123,6 +127,17 @@ func (g *Game) cameraTarget() (float64, float64) {
 
 func (g *Game) Update() error {
 	g.tick++
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	}
+	if g.inMenu {
+		g.updateMenu()
+		return nil
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.openMenu()
+		return nil
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
 		g.reset()
 	}
@@ -135,20 +150,8 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
 		g.zoomIdx = (g.zoomIdx + 1) % len(zoomSteps)
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
-		ebiten.SetFullscreen(!ebiten.IsFullscreen())
-	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		g.showFPS = !g.showFPS
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
-		// Switch game mode. Temporary, until there is a mode chooser.
-		if g.mode == sim.ModeCrystals {
-			g.mode = sim.ModeCargo
-		} else {
-			g.mode = sim.ModeCrystals
-		}
-		g.setLevel(0)
 	}
 
 	in := sim.Input{
@@ -195,6 +198,10 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.fps.frame(time.Now())
+	if g.inMenu {
+		g.drawMenu(screen)
+		return
+	}
 	screen.Fill(colBG)
 	l := g.world.Level
 	s := &g.world.Ship

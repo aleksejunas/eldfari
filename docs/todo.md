@@ -79,15 +79,16 @@ gap goes down from ~7x ship height (20) to ~4x (70).
        name), `sim.Mode` with a `switch`
 7. [x] Cargo levels: 10 Kranen (over a hill), 20 Lageret (down a shaft into
        a cellar, out through a tunnel), 30 Hylla (onto a high shelf)
-8. [x] Temporary key `M` to switch mode
+8. [x] Temporary key `M` to switch mode (replaced by the menu)
 - [ ] Play-test the cargo levels; tune `CargoMass` and `RopeLength` in
       `sim/cargo.go` if lifting feels too heavy
 - [ ] `cmd/levelstat` only measures crystals levels so far
 
-## 6. Mode chooser
+## 6. Mode chooser (done)
 
-- [ ] A simple screen listing modes and levels, built now that there are two
-      modes to choose between. Replaces the temporary mode key
+- [x] A menu listing modes and levels with best times (`game/menu.go`):
+      left/right mode, up/down level, Enter to play, `M`/`Esc` back. The
+      game starts in it. Replaces the temporary mode key
 
 ## 7. Gamepad support
 

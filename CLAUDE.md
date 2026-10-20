@@ -24,7 +24,8 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
 - New game logic belongs in `sim/` with tests, not in `game/`.
 - Game modes: `sim.Mode` (crystals, cargo) on each `Level`; `World.Step`
   switches on it. Cargo mode lives in `sim/cargo.go` (rope, cargo, delivery)
-  and `game/cargo.go` (drawing). `M` switches mode until there is a chooser.
+  and `game/cargo.go` (drawing). The menu (`game/menu.go`, `M`/`Esc`)
+  chooses mode and level; the game starts in it.
 - Browser build: `web/index.html` + GitHub Actions (`.github/workflows/`)
   deploys to GitHub Pages on every push to `master`.
 
@@ -95,7 +96,7 @@ they will be done:
    play-testing by someone else.
 3. Done: cargo on a rope (substeps, rope, cargo mode, 3 levels); needs
    play-testing.
-4. Next: mode chooser.
-5. Gamepad (`docs/gamepad.md`).
+4. Done: menu to choose mode and level.
+5. Next: gamepad (`docs/gamepad.md`).
 6. Two players in split screen.
 7. Later: in-game level editor.
