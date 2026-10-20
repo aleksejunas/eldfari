@@ -120,3 +120,5 @@ Full plan: [gamepad.md](gamepad.md)
       crystals are taken)
 - [x] Visual effect while refuelling
 - [x] Levels as data (JSON or image) instead of code
+- [ ] Rename the levels to Old Norse (e.g. Grotta -> Hellir). Best times are
+      keyed by level name, so old records need a rename map or are lost
