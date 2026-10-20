@@ -87,6 +87,7 @@ type World struct {
 	// Game state. Got uses the same index as Level.Crystals.
 	Got     []bool
 	NGot    int
+	Cargo   Cargo   // cargo mode only
 	Time    float64 // seconds since first liftoff (keeps counting while refuelling)
 	Started bool
 	Won     bool
@@ -102,6 +103,7 @@ func (w *World) Reset() {
 	w.Ship = Ship{X: w.Level.Start.X, Y: w.Level.Start.Y, Fuel: 1, State: Landed}
 	w.Got = make([]bool, len(w.Level.Crystals))
 	w.NGot, w.Time, w.Started, w.Won = 0, 0, false, false
+	w.Cargo = Cargo{X: w.Level.CargoStart.X, Y: w.Level.CargoStart.Y}
 }
 
 // Step advances the world by one fixed time step (Dt).
@@ -124,6 +126,11 @@ func (w *World) Step(in Input) {
 		} else {
 			s.Refuelling = s.Fuel < 1
 			s.Fuel = min(1, s.Fuel+RefuelRate*Dt)
+			if w.Level.Mode == ModeCargo {
+				for range Substeps {
+					w.moveCargo(Dt/Substeps, true) // the cargo still swings and settles
+				}
+			}
 			return
 		}
 	}
@@ -165,7 +172,15 @@ func (w *World) substep(in Input, h float64) {
 	s.X += s.VX * h
 	s.Y += s.VY * h
 
-	w.pickup() // before collision, so the last crystal counts when landing in the same step
+	// Before the ship's collision, so a pickup or delivery in the same substep
+	// as a landing counts, and so the ship's collision sees where the rope
+	// pulled it.
+	switch w.Level.Mode {
+	case ModeCrystals:
+		w.pickup()
+	case ModeCargo:
+		w.moveCargo(h, false)
+	}
 	w.collide()
 }
 
@@ -231,8 +246,9 @@ func (w *World) collide() {
 		s.VX, s.VY, s.Angle = 0, 0, 0
 		s.Y = pad.Y - ShipRear - 0.5 // rear edge just above the pad
 		s.State = Landed
-		// Win: all crystals taken and landed on the start pad (Pads[0]).
-		if n := len(w.Level.Crystals); n > 0 && w.NGot == n && pad == w.Level.Pads[0] {
+		// Crystals mode win: all crystals taken and landed on the start pad
+		// (Pads[0]). Cargo mode is won in moveCargo.
+		if n := len(w.Level.Crystals); w.Level.Mode == ModeCrystals && n > 0 && w.NGot == n && pad == w.Level.Pads[0] {
 			w.Won = true
 		}
 		return

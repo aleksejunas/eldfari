@@ -11,6 +11,15 @@ type Pt struct{ X, Y float64 }
 // Pad is a flat landing pad: the top of the terrain between X0 and X1 at Y.
 type Pad struct{ X0, X1, Y float64 }
 
+// Mode is the game mode a level is made for. The folder the level file is
+// in decides it (levels/crystals, levels/cargo).
+type Mode int
+
+const (
+	ModeCrystals Mode = iota // collect all crystals, land on the start pad
+	ModeCargo                // deliver the cargo to the goal pad
+)
+
 // Level holds the terrain as polygons (drawn as outlines) and an invisible
 // bitmask used for pixel collision. Everything outside the world is solid.
 type Level struct {
@@ -19,7 +28,12 @@ type Level struct {
 	Pads  []Pad
 	Start Pt // where the ship spawns (its centre)
 
-	Crystals []Pt // collected by flying onto them
+	Mode Mode
+
+	Crystals []Pt // crystals mode: collected by flying onto them
+
+	CargoStart Pt  // cargo mode: where the cargo rests at the start (its centre)
+	Goal       int // cargo mode: index in Pads of the goal pad
 
 	Name      string
 	polyNames []string // only used in error messages
