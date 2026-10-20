@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Raketti</title>
+  <title>eldfari</title>
   <link rel="icon" href="data:,">
   <style>
     html, body { margin: 0; height: 100%; background: #2b2626; color: #dcd7d2;
@@ -30,7 +30,7 @@
 <body>
   <div id="intro">
     <div class="card">
-      <h1>RAKETTI</h1>
+      <h1>eldfari</h1>
       <p class="tagline">A gravity cave flyer. Needs a keyboard.</p>
 
       <h2>Goal</h2>
@@ -67,7 +67,7 @@
     const play = document.getElementById("play");
 
     // Load the game in the background while the player reads. Start it on click.
-    WebAssembly.instantiateStreaming(fetch("raketti.wasm"), go.importObject)
+    WebAssembly.instantiateStreaming(fetch("eldfari.wasm"), go.importObject)
       .then(result => {
         play.disabled = false;
         play.textContent = "Play";

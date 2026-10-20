@@ -32,7 +32,7 @@ jobs:
 
       - name: build WASM
         run: |
-          GOOS=js GOARCH=wasm go build -o web/raketti.wasm . 
+          GOOS=js GOARCH=wasm go build -o web/eldfari.wasm . 
           cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" web/
       - uses: actions/configure-pages@v5
 

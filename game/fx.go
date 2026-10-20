@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/rand"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 // particle is used for exhaust streaks, fuel sparks and wreckage: a short line segment

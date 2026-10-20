@@ -18,8 +18,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"raketti/levels"
-	"raketti/sim"
+	"eldfari/levels"
+	"eldfari/sim"
 )
 
 const shipHeight = 21.0 // px, nose to rear

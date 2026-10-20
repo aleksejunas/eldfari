@@ -6,7 +6,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"raketti/levels"
+	"eldfari/levels"
 )
 
 func TestShippedLevelsLoadAndValidate(t *testing.T) {

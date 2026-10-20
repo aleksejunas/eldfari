@@ -12,19 +12,18 @@ import (
 )
 
 // loadBestTimes reads the best times from a JSON file in the user's config
-// dir, e.g. ~/.config/raketti/best.json on Linux.
+// dir, e.g. ~/.config/eldfari/best.json on Linux.
 func loadBestTimes() *bestTimes {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		log.Printf("best times will not be saved: %v", err)
 		return &bestTimes{times: map[string]float64{}}
 	}
-	path := filepath.Join(dir, "raketti", "best.json")
+	path := filepath.Join(dir, "eldfari", "best.json")
 	times, err := readBestTimes(path)
 	if err != nil {
 		log.Printf("ignoring best times: %v", err)
 	}
-	migrateOldKeys(times)
 	save := func(times map[string]float64) error { return writeBestTimes(path, times) }
 	return &bestTimes{times: times, save: save}
 }

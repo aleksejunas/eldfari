@@ -15,7 +15,7 @@ import (
 	"golang.org/x/image/font/gofont/gomedium"
 	"golang.org/x/image/font/gofont/gomonobold"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 // HUD layout. All sizes and positions are for a startH (800 px) tall screen and

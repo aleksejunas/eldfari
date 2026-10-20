@@ -1,4 +1,4 @@
-# Raketti
+# eldfari
 
 Go + Ebitengine remake of Turboraketti (Amiga): gravity, landing, fuel,
 crystals. Two players come later.
@@ -75,9 +75,8 @@ Everything outside the world is solid.
 - Cargo levels add `"cargo": [x, y]` and `"goal": "pad name"` instead of
   crystals: 10 Vindáss, 20 Búr, 30 Hilla. `cmd/levelstat` only handles
   crystals levels.
-- Best times are keyed by mode and level name (`crystals/Hellir`). When a
-  level is renamed, add the old key to `renamedLevels` in
-  `game/besttimes.go` so records are kept.
+- Best times are keyed by mode and level name (`crystals/Hellir`). Renaming
+  a level loses its records, which is fine.
 
 ## Conventions
 

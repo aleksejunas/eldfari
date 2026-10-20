@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 // Two rooms joined by a corridor that is 100 px tall and 400 px long.

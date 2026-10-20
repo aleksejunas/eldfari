@@ -10,7 +10,7 @@ import (
 )
 
 // storageKey is the localStorage key for the best times (as a JSON string)
-const storageKey = "raketti.best"
+const storageKey = "eldfari.best"
 
 // loadBestTimes reads the best times from the browser's localStorage. If
 // storage is blocked, the times are kept in memory only.
@@ -32,7 +32,6 @@ func loadBestTimes() *bestTimes {
 			log.Printf("ignoring best times: %v", err)
 			b.times = map[string]float64{}
 		}
-		migrateOldKeys(b.times)
 	}
 	return b
 }

@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"math"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 // drawCargo draws the goal pad in the cargo's colour with a marker bobbing

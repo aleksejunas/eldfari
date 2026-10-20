@@ -27,7 +27,7 @@ func TestBestTimesCorruptFile(t *testing.T) {
 }
 
 func TestBestTimesRecordAndReload(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "raketti", "best.json") // dir doesn't exist yet
+	path := filepath.Join(t.TempDir(), "eldfari", "best.json") // dir doesn't exist yet
 	save := func(times map[string]float64) error { return writeBestTimes(path, times) }
 	b := &bestTimes{times: map[string]float64{}, save: save}
 	b.record("crystals/Grotta", 40)

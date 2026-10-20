@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"raketti/levels"
+	"eldfari/levels"
 )
 
 // autopilot flies the ship through waypoints with a simple controller, using

@@ -1,4 +1,4 @@
-# Raketti – todo
+# eldfari – todo
 
 The sections are in the order they will be done.
 
@@ -120,5 +120,5 @@ Full plan: [gamepad.md](gamepad.md)
       crystals are taken)
 - [x] Visual effect while refuelling
 - [x] Levels as data (JSON or image) instead of code
-- [x] Old Norse level names (Grotta -> Hellir, Kranen -> Vindáss, ...);
-      `renamedLevels` in `game/besttimes.go` moves old records
+- [x] Old Norse level names (Grotta -> Hellir, Kranen -> Vindáss, ...)
+- [x] The game is called eldfari (was Raketti), repo and page too

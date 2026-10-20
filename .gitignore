@@ -1,4 +1,4 @@
-/raketti
+/eldfari
 *.exe
-web/raketti.wasm
+web/eldfari.wasm
 web/wasm_exec.js

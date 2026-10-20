@@ -8,7 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 // modeOrder is the order of the modes in the menu.
@@ -102,7 +102,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 	num := g.face(fontNum, sizeText)
 
 	left := W/2 - 300
-	g.print(screen, "RAKETTI", left, H*0.14, big, text.AlignStart, colShip)
+	g.print(screen, "eldfari", left, H*0.14, big, text.AlignStart, colShip)
 
 	selMode, selLevel := g.menu.selected()
 	top := H*0.14 + 80

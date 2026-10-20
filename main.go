@@ -1,11 +1,11 @@
-// Raketti: vector remake of a gravity game in the style of Thrust/Turboraketti.
+// eldfari: vector remake of a gravity game in the style of Thrust/Turboraketti.
 // Game logic lives in sim/, window, input and drawing in game/.
 package main
 
 import (
 	"log"
 
-	"raketti/game"
+	"eldfari/game"
 )
 
 func main() {

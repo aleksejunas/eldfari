@@ -1,4 +1,4 @@
-module raketti
+module eldfari
 
 go 1.25.0
 

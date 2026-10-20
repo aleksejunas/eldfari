@@ -1,4 +1,4 @@
-# Raketti
+# eldfari
 
 Vector-style gravity cave flyer, inspired by Turboraketti (Amiga, Heikki
 Kosola). No graphics or levels are copied from the original. Only the idea.
@@ -6,7 +6,7 @@ Kosola). No graphics or levels are copied from the original. Only the idea.
 The spark came from [Quattroids](https://github.com/28allday/Quattroids)
 by 28allday, a vector arcade shooter for the Omarchy shell. It brought
 Turboraketti back to mind, and its clean vector look is the visual
-inspiration for Raketti.
+inspiration for eldfari.
 
 Written in Go, using [Ebitengine](https://ebitengine.org/).
 
@@ -15,7 +15,7 @@ modes are on the way.
 
 ## Play in the browser
 
-**<https://aleksejunas.github.io/raketti/>**
+**<https://aleksejunas.github.io/eldfari/>**
 
 Fly through the caves, collect every crystal and land gently back on the pad
 you started from. Land on any pad to refuel. Too fast or too tilted and you
@@ -42,7 +42,7 @@ go run .
 go test ./...    # physics, collision, landing and level validation
 ```
 
-Best times are saved to `~/.config/raketti/best.json` (per mode and level
+Best times are saved to `~/.config/eldfari/best.json` (per mode and level
 name).
 
 Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
@@ -51,13 +51,13 @@ Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 ## Browser build
 
 Every push to `master` runs `.github/workflows/pages.yml`: it tests `sim/`,
-builds `web/raketti.wasm`, copies `wasm_exec.js` from the Go toolchain and
+builds `web/eldfari.wasm`, copies `wasm_exec.js` from the Go toolchain and
 deploys `web/` to GitHub Pages.
 
 To test the browser build locally:
 
 ```sh
-GOOS=js GOARCH=wasm go build -o web/raketti.wasm .
+GOOS=js GOARCH=wasm go build -o web/eldfari.wasm .
 cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" web/
 python3 -m http.server -d web 8080    # open http://localhost:8080
 ```
@@ -88,7 +88,7 @@ Both are build output and ignored by git.
   config dir (memory only in the browser).
 - `game/version.go`: git commit and time the binary was built from, shown in
   the HUD.
-- `web/index.html`: page that loads `wasm_exec.js` and starts `raketti.wasm`.
+- `web/index.html`: page that loads `wasm_exec.js` and starts `eldfari.wasm`.
 - `.github/workflows/pages.yml`: builds the WASM version and deploys it to
   GitHub Pages.
 

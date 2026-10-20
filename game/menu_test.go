@@ -3,7 +3,7 @@ package game
 import (
 	"testing"
 
-	"raketti/sim"
+	"eldfari/sim"
 )
 
 func TestMenuMoveWrapsAndRemembersLevelPerMode(t *testing.T) {

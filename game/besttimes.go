@@ -1,9 +1,6 @@
 package game
 
-import (
-	"log"
-	"strings"
-)
+import "log"
 
 // bestTimes holds the best time per level in seconds, keyed by mode and level
 // name ("crystals/Grotta").
@@ -28,46 +25,5 @@ func (b *bestTimes) record(level string, t float64) {
 	}
 	if err := b.save(b.times); err != nil {
 		log.Printf("saving best times: %v", err)
-	}
-}
-
-// renamedLevels maps old best-time keys to the level's current name, so
-// records survive a rename (the levels got Old Norse names).
-var renamedLevels = map[string]string{
-	"crystals/Grotta":    "crystals/Hellir",
-	"crystals/Passasjen": "crystals/Gangr",
-	"crystals/Sprekken":  "crystals/Rifa",
-	"crystals/Dryppet":   "crystals/Dropi",
-	"crystals/Langveien": "crystals/Langvegr",
-	"crystals/Sjakta":    "crystals/Gjá",
-	"crystals/Dypet":     "crystals/Djúp",
-	"cargo/Kranen":       "cargo/Vindáss",
-	"cargo/Lageret":      "cargo/Búr",
-	"cargo/Hylla":        "cargo/Hilla",
-}
-
-// migrateOldKeys keeps old records: times saved before there were modes
-// ("Grotta") move to the crystals mode ("crystals/Grotta"), and renamed
-// levels move to their new name ("crystals/Hellir"). If both exist, the
-// newer key wins.
-func migrateOldKeys(times map[string]float64) {
-	for k, v := range times {
-		if strings.Contains(k, "/") {
-			continue
-		}
-		delete(times, k)
-		if _, ok := times["crystals/"+k]; !ok {
-			times["crystals/"+k] = v
-		}
-	}
-	for old, now := range renamedLevels {
-		v, ok := times[old]
-		if !ok {
-			continue
-		}
-		delete(times, old)
-		if _, ok := times[now]; !ok {
-			times[now] = v
-		}
 	}
 }

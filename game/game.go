@@ -13,8 +13,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
-	"raketti/levels"
-	"raketti/sim"
+	"eldfari/levels"
+	"eldfari/sim"
 )
 
 const (
@@ -332,7 +332,7 @@ func fade(c color.RGBA, a float64) color.RGBA {
 func Run() error {
 	ebiten.SetWindowSize(startW, startH)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
-	ebiten.SetWindowTitle("Raketti")
-	log.Printf("Raketti %s", version())
+	ebiten.SetWindowTitle("eldfari")
+	log.Printf("eldfari %s", version())
 	return ebiten.RunGame(newGame())
 }
