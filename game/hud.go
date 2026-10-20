@@ -63,7 +63,7 @@ func (g *Game) print(dst *ebiten.Image, s string, x, y float64, face *text.GoTex
 	op.ColorScale.Reset()
 	op.ColorScale.ScaleWithColor(c)
 	text.Draw(dst, s, face, op)
-	return text.Advance(s, face) / g.scale
+	return text.AdvanceAt(s, len(s), face) / g.scale
 }
 
 // fmtTime formats as m:ss.s
@@ -144,7 +144,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	help := fmt.Sprintf("A/D turn  ·  W thrust  ·  R restart  ·  N/P level  ·  Z zoom %gx  ·  F fullscreen", zoomSteps[g.zoomIdx])
 	y = H - margin - sizeSmall
 	hw := g.print(screen, help, margin, y, small, text.AlignStart, colDim)
-	if margin+hw+24+text.Advance(g.version, small)/g.scale > right {
+	if margin+hw+24+text.AdvanceAt(g.version, len(g.version), small)/g.scale > right {
 		y -= sizeSmall + 6 // no room next to the help text: one line up
 	}
 	g.print(screen, g.version, right, y, small, text.AlignEnd, colDim)

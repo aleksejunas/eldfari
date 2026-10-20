@@ -17,7 +17,9 @@ func TestBestTimesMissingFile(t *testing.T) {
 
 func TestBestTimesCorruptFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "best.json")
-	os.WriteFile(path, []byte("{not json"), 0o644)
+	if err := os.WriteFile(path, []byte("{not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	times, err := readBestTimes(path)
 	if err == nil || times == nil || len(times) != 0 {
 		t.Errorf("times=%v err=%v, expected an empty map and an error", times, err)
