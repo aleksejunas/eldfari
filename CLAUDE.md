@@ -52,6 +52,12 @@ Everything outside the world is solid.
 - Level 1 Grotta (intro), 2 Passasjen (gentle step up), 3 Dypet (hard, narrow
   passages). If a level is too hard, tune it. Level names are proper names and
   stay Norwegian.
+- Planned (docs/todo.md section 3): one folder per mode (`levels/crystals/`,
+  `levels/cargo/`, `levels/twoplayer/`), no mode field in the JSON, each mode
+  with its own loader and fields. File names start with a number with gaps
+  (10, 20 ...), sorted numerically. Grotta/Passasjen/Dypet become crystals
+  10/20/70. Add a mode's folder and embed pattern only when the mode exists
+  (`go:embed` fails on an empty folder).
 
 ## Conventions
 
@@ -65,12 +71,18 @@ Everything outside the world is solid.
 - Browser/WASM code (`web/`, workflow, browser storage): the user writes it
   themselves. Explain and give code to copy, do not edit those files.
 
-## Roadmap (in this order)
+## Roadmap
 
-1. Small things: physics substeps, fuel effect. (Done: arrows to
-   crystal/pad, best time to file.)
-2. Browser: best times in localStorage. (Done: WASM build on GitHub Pages.)
-3. Cargo on a rope, Thrust style.
-4. Two players in split screen: shooting, base, weapons, liquid drag, more
-   levels.
-5. In-game level editor.
+Details and checkboxes in `docs/todo.md`, where the sections are in the order
+they will be done:
+
+1. Browser: best times in localStorage, instructions for non-developers.
+2. Levels: one folder per mode.
+3. New crystals levels 30–60 (analysis tool first: minimum clearance and
+   route length per level).
+4. Gamepad (`docs/gamepad.md`).
+5. Cargo on a rope: substeps first, then pendulum, mass, collision,
+   delivery, cargo mode.
+6. Mode chooser (once there are two modes).
+7. Two players in split screen.
+8. Later: in-game level editor.
