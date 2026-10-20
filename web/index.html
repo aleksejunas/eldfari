@@ -4,27 +4,80 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Raketti</title>
+  <link rel="icon" href="data:,">
   <style>
-    html, body {margin: 0; height: 100%;
-    background: #2b2626; color: #dcd7d2; font-family: monospace; }
-    #status { position: absolute; inset: 0;
-    display: grid; place-items: center; margin: 0; }
-    </style>
+    html, body { margin: 0; height: 100%; background: #2b2626; color: #dcd7d2;
+                 font-family: system-ui, sans-serif; }
+    #intro { position: absolute; inset: 0; display: grid; place-items: center;
+             padding: 16px; box-sizing: border-box; }
+    .card { max-width: 440px; line-height: 1.5; }
+    h1 { margin: 0 0 4px; font-size: 2.2rem; letter-spacing: 0.08em; }
+    .tagline { margin: 0 0 20px; color: #8c827c; }
+    h2 { margin: 20px 0 6px; font-size: 0.8rem; letter-spacing: 0.1em;
+         text-transform: uppercase; color: #8c827c; }
+    p { margin: 0 0 8px; }
+    ul { margin: 0; padding: 0; list-style: none; }
+    li { display: flex; gap: 12px; }
+    kbd { display: inline-block; min-width: 9.5em; color: #f5d68a;
+          font-family: ui-monospace, monospace; }
+    .note { font-size: 0.85rem; color: #8c827c; }
+    button { margin-top: 24px; padding: 10px 28px; font: inherit; font-weight: 600;
+             color: #2b2626; background: #e8a85a; border: 0; border-radius: 6px;
+             cursor: pointer; }
+    button:disabled { background: #5a504c; color: #8c827c; cursor: wait; }
+  </style>
 </head>
 <body>
-    <p id="status">Loading Raketti...</p>
-    <script src="wasm_exec.js"></script>
-<script>
-      const go = new Go();
-      WebAssembly.instantiateStreaming(fetch("raketti.wasm"), go.importObject)
-    .then(result => {
-    document.getElementById("status").remove();
-    go.run(result.instance);
-    })
-    .catch(err => {
+  <div id="intro">
+    <div class="card">
+      <h1>RAKETTI</h1>
+      <p class="tagline">A gravity cave flyer. Needs a keyboard.</p>
 
-    document.getElementById("status").textContent = "Could not start the game: " + err;
-    })
-</script>
-  </body>
+      <h2>Goal</h2>
+      <p>Fly through the cave and collect every crystal. Then land gently back
+        on the pad you started from. Your time starts when you lift off.</p>
+      <p>Land on any pad to refuel. Too fast or too tilted and you crash.
+        The yellow arrow points to the nearest crystal, the orange one to a pad.</p>
+
+      <h2>Keys</h2>
+      <ul>
+        <li><kbd>A / D or ← →</kbd> turn</li>
+        <li><kbd>W, ↑ or Space</kbd> thrust</li>
+        <li><kbd>R</kbd> restart</li>
+        <li><kbd>N / P</kbd> next / previous level</li>
+        <li><kbd>Z</kbd> zoom</li>
+        <li><kbd>F</kbd> fullscreen</li>
+      </ul>
+
+      <h2>Tips</h2>
+      <p class="note">Your best times are saved in this browser. If some keys do
+        nothing, a browser shortcut or extension is catching them: try another
+        browser.</p>
+
+      <button id="play" disabled>Loading…</button>
+    </div>
+  </div>
+
+  <script src="wasm_exec.js"></script>
+  <script>
+    const go = new Go();
+    const play = document.getElementById("play");
+
+    // Load the game in the background while the player reads. Start it on click.
+    WebAssembly.instantiateStreaming(fetch("raketti.wasm"), go.importObject)
+      .then(result => {
+        play.disabled = false;
+        play.textContent = "Play";
+        play.focus();
+        play.onclick = () => {
+          document.getElementById("intro").remove();
+          go.run(result.instance);
+        };
+      })
+      .catch(err => {
+        play.textContent = "Could not start the game";
+        console.error(err);
+      });
+  </script>
+</body>
 </html>

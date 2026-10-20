@@ -26,8 +26,8 @@ Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
 
 If some keys do nothing, the browser is probably catching them: Vivaldi's
 single-key shortcuts or a Vim-style extension (Vimium etc.). Turn those off
-for the site, or use another browser. In the browser, best times are only
-kept until you close the tab.
+for the site, or use another browser. In the browser, best times are saved
+in localStorage.
 
 ## Run locally
 
@@ -36,7 +36,8 @@ go run .
 go test ./...    # physics, collision, landing and level validation
 ```
 
-Best times are saved to `~/.config/raketti/best.json` (per level name).
+Best times are saved to `~/.config/raketti/best.json` (per mode and level
+name).
 
 Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 <https://ebitengine.org/en/documents/install.html> if the build complains.
@@ -65,7 +66,8 @@ Both are build output and ignored by git.
 - `sim/level.go`: terrain as polygons, rasterized to an invisible bitmask.
   Pads.
 - `sim/levelfile.go`: JSON level format, loading and validation.
-- `levels/*.json`: the levels, embedded in the binary and sorted by file name.
+- `levels/crystals/*.json`: the levels, one folder per game mode, embedded
+  in the binary and sorted by the number at the start of the file name.
 - `main.go`: starts the game, nothing else.
 - `game/game.go`: Ebitengine: window, input, camera, drawing.
 - `game/hud.go`: the HUD (fuel, speed, time, crystals, messages), drawn with
