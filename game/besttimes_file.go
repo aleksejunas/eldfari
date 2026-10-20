@@ -24,6 +24,7 @@ func loadBestTimes() *bestTimes {
 	if err != nil {
 		log.Printf("ignoring best times: %v", err)
 	}
+	migrateOldKeys(times)
 	save := func(times map[string]float64) error { return writeBestTimes(path, times) }
 	return &bestTimes{times: times, save: save}
 }

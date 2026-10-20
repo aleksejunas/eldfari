@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -52,7 +53,9 @@ type levelFile struct {
 	Crystals [][2]float64 `json:"crystals"`
 }
 
-// LoadDir reads all *.json in fsys (sorted by file name) and validates them.
+// LoadDir reads all *.json in fsys and validates them. File names start with
+// a number (10-grotta.json), and the levels are sorted by that number, so 100
+// comes after 90.
 func LoadDir(fsys fs.FS) ([]*Level, error) {
 	names, err := fs.Glob(fsys, "*.json")
 	if err != nil {
@@ -61,7 +64,20 @@ func LoadDir(fsys fs.FS) ([]*Level, error) {
 	if len(names) == 0 {
 		return nil, errors.New("no level files found (*.json)")
 	}
-	sort.Strings(names)
+	nums := map[string]int{}
+	seen := map[int]string{}
+	for _, n := range names {
+		num, ok := levelNumber(n)
+		if !ok {
+			return nil, fmt.Errorf("%s: the file name must start with a number, e.g. 10-name.json", n)
+		}
+		if other, dup := seen[num]; dup {
+			return nil, fmt.Errorf("%s and %s have the same number", other, n)
+		}
+		nums[n], seen[num] = num, n
+	}
+	sort.Slice(names, func(i, j int) bool { return nums[names[i]] < nums[names[j]] })
+
 	var out []*Level
 	for _, n := range names {
 		data, err := fs.ReadFile(fsys, n)
@@ -78,6 +94,14 @@ func LoadDir(fsys fs.FS) ([]*Level, error) {
 		out = append(out, l)
 	}
 	return out, nil
+}
+
+// levelNumber returns the number at the start of a file name ("10-grotta.json"
+// gives 10).
+func levelNumber(name string) (int, bool) {
+	digits := len(name) - len(strings.TrimLeft(name, "0123456789"))
+	n, err := strconv.Atoi(name[:digits])
+	return n, err == nil
 }
 
 // ParseLevel reads one level file and validates it. Unknown fields are an error,

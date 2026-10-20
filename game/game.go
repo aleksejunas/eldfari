@@ -46,13 +46,14 @@ type Game struct {
 	scale   float64 // g.h / startH: the HUD and zoom are designed for a startH tall screen
 	zoomIdx int
 
-	tick    int // counts Update calls, used for animation
+	tick    int    // counts Update calls, used for animation
+	mode    string // folder in levels/; only "crystals" for now
 	version string
 	wasWon  bool
 }
 
 func newGame() *Game {
-	ls, err := sim.LoadDir(levels.FS)
+	ls, err := sim.LoadDir(levels.Crystals)
 	if err != nil {
 		log.Fatalf("level files:\n%v", err)
 	}
@@ -64,6 +65,7 @@ func newGame() *Game {
 		scale:   1,
 		zoomIdx: 2, // 2x
 		version: version(),
+		mode:    "crystals",
 	}
 	g.setLevel(0)
 	return g
@@ -76,6 +78,9 @@ func (g *Game) setLevel(i int) {
 	g.world = sim.NewWorld(g.levels[g.lvl])
 	g.reset()
 }
+
+// bestKey is the key for the current level's best time: mode and level name.
+func (g *Game) bestKey() string { return g.mode + "/" + g.world.Level.Name }
 
 // zoom returns screen pixels per world pixel.
 func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
@@ -131,7 +136,7 @@ func (g *Game) Update() error {
 	g.world.Step(in)
 
 	if g.world.Won && !g.wasWon {
-		g.best.record(g.world.Level.Name, g.world.Time)
+		g.best.record(g.bestKey(), g.world.Time)
 	}
 	g.wasWon = g.world.Won
 

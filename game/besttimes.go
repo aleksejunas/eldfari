@@ -1,8 +1,12 @@
 package game
 
-import "log"
+import (
+	"log"
+	"strings"
+)
 
-// bestTimes holds the best time per level (keyed by level name, in seconds).
+// bestTimes holds the best time per level in seconds, keyed by mode and level
+// name ("crystals/Grotta").
 // Where they are stored depends on the platform: a JSON file on desktop
 // (besttimes_file.go) and localStorage in the browser (besttimes_js.go).
 type bestTimes struct {
@@ -24,5 +28,19 @@ func (b *bestTimes) record(level string, t float64) {
 	}
 	if err := b.save(b.times); err != nil {
 		log.Printf("saving best times: %v", err)
+	}
+}
+
+// migrateOldKeys moves times saved before there were modes ("Grotta") to the
+// crystals mode ("crystals/Grotta"), so old records are kept.
+func migrateOldKeys(times map[string]float64) {
+	for k, v := range times {
+		if strings.Contains(k, "/") {
+			continue
+		}
+		delete(times, k)
+		if _, ok := times["crystals/"+k]; !ok {
+			times["crystals/"+k] = v
+		}
 	}
 }

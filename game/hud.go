@@ -118,7 +118,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	}
 	cw := g.print(screen, fmt.Sprintf("%d/%d", w.NGot, total), right, margin+26, num, text.AlignEnd, gemCol)
 	g.diamond(screen, right-cw-12, margin+35, colGem)
-	if b := g.best.get(w.Level.Name); b > 0 {
+	if b := g.best.get(g.bestKey()); b > 0 {
 		g.print(screen, "BEST "+fmtTime(b), right, margin+48, small, text.AlignEnd, colDim)
 	}
 

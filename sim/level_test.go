@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"raketti/levels"
 )
 
 func TestShippedLevelsLoadAndValidate(t *testing.T) {
-	ls, err := LoadDir(levels.FS)
+	ls, err := LoadDir(levels.Crystals)
 	if err != nil {
 		t.Fatalf("the levels are not valid:\n%v", err)
 	}
@@ -25,7 +26,7 @@ func TestShippedLevelsLoadAndValidate(t *testing.T) {
 
 // Every shipped level: the ship starts at rest on the start pad and refuels.
 func TestShippedLevelsSpawnAndRefuel(t *testing.T) {
-	ls, err := LoadDir(levels.FS)
+	ls, err := LoadDir(levels.Crystals)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,5 +148,49 @@ func TestValidateReportsAllProblems(t *testing.T) {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error is missing %q:\n%v", want, err)
 		}
+	}
+}
+
+// Levels are sorted by the number at the start of the file name, not as text.
+func TestLoadDirSortsByNumber(t *testing.T) {
+	level := func(name string) *fstest.MapFile {
+		json := strings.Replace(levelJSON("", okPad, okCrystals), `"name": "test"`, `"name": "`+name+`"`, 1)
+		return &fstest.MapFile{Data: []byte(json)}
+	}
+	fsys := fstest.MapFS{
+		"100-c.json": level("c"),
+		"20-b.json":  level("b"),
+		"10-a.json":  level("a"),
+	}
+	ls, err := LoadDir(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, l := range ls {
+		got = append(got, l.Name)
+	}
+	if strings.Join(got, " ") != "a b c" {
+		t.Errorf("order = %v, want [a b c]", got)
+	}
+}
+
+func TestLoadDirRejectsBadFileNames(t *testing.T) {
+	data := &fstest.MapFile{Data: []byte(levelJSON("", okPad, okCrystals))}
+	cases := []struct {
+		name string
+		fsys fstest.MapFS
+		want string
+	}{
+		{"no number", fstest.MapFS{"grotta.json": data}, "must start with a number"},
+		{"same number", fstest.MapFS{"10-a.json": data, "10-b.json": data}, "same number"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := LoadDir(c.fsys)
+			if err == nil || !strings.Contains(err.Error(), c.want) {
+				t.Errorf("err = %v, want it to contain %q", err, c.want)
+			}
+		})
 	}
 }

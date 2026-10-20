@@ -10,7 +10,7 @@ The sections are in the order they will be done.
 - [x] Best time, saved to file (`game/besttimes.go`)
 - [x] Tests: pickup, win, timer, free air around each crystal
 
-## 2. Share the game: playable in the browser
+## 2. Share the game: playable in the browser (done)
 
 I want to write this code myself. Claude explains and gives code to copy,
 but does not edit files.
@@ -20,27 +20,27 @@ but does not edit files.
 - [x] Host on GitHub Pages (static, a GitHub Actions workflow that builds
       and deploys)
 - [x] Best times in the browser (localStorage, `game/besttimes_js.go`)
-- [ ] Short instructions for a non-developer: link, keys, what the goal is
+- [x] Short instructions for a non-developer: link, keys, what the goal is
 
-## 3. Levels: one folder per mode
+## 3. Levels: one folder per mode (done)
 
 Mode = folder: `levels/crystals/`, `levels/cargo/`, `levels/twoplayer/`.
 No "mode" field in the JSON. Each mode has its own loader and its own fields,
 and `DisallowUnknownFields` stays strict, so data for one mode is an error in
 another mode's levels.
 
-- [ ] Move today's levels: `01-grotta` -> `crystals/10-grotta`,
+- [x] Move today's levels: `01-grotta` -> `crystals/10-grotta`,
       `02-passasjen` -> `crystals/20-passasjen`,
       `03-dypet` -> `crystals/70-dypet`
-- [ ] `//go:embed crystals/*.json`. A mode's folder and embed pattern are
+- [x] `//go:embed crystals/*.json`. A mode's folder and embed pattern are
       added when that mode is built (`go:embed` fails on an empty folder)
-- [ ] File names start with a number with gaps (10, 20, 30 ...), so new
+- [x] File names start with a number with gaps (10, 20, 30 ...), so new
       levels can be slotted in without renaming. Sort on the number, not as
       text, so 100 comes after 90
-- [ ] N/P only steps through the levels of the current mode
-- [ ] Best times keyed by mode + level name, so equal names in two modes
+- [x] N/P only steps through the levels of the current mode
+- [x] Best times keyed by mode + level name, so equal names in two modes
       don't share a record
-- [ ] Update paths in README and CLAUDE.md
+- [x] Update paths in README and CLAUDE.md
 
 ## 4. New crystals levels
 

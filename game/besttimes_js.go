@@ -32,6 +32,7 @@ func loadBestTimes() *bestTimes {
 			log.Printf("ignoring best times: %v", err)
 			b.times = map[string]float64{}
 		}
+		migrateOldKeys(b.times)
 	}
 	return b
 }

@@ -43,21 +43,20 @@ Everything outside the world is solid.
 
 ## Level format
 
-- JSON in `levels/`, embedded with `//go:embed *.json`, loaded sorted by file
-  name (`NN-name.json`).
+- JSON in one folder per game mode (`levels/crystals/` for now), embedded in
+  `levels/levels.go`. No mode field in the JSON: the folder is the mode. A
+  mode's folder is added to the embed pattern when the mode is built
+  (`go:embed` fails on an empty folder).
+- File names start with a number with gaps: `10-grotta.json`. `LoadDir` sorts
+  numerically (100 after 90) and rejects missing or duplicate numbers.
 - Parsed and validated in `sim/levelfile.go`: unknown fields are errors, and
   all problems are reported together (crossing edges, narrow/floating pads,
   clearance above pads and around crystals, spawn). `pads[0]` is start and
   goal. `TestShippedLevelsLoadAndValidate` checks them all.
-- Level 1 Grotta (intro), 2 Passasjen (gentle step up), 3 Dypet (hard, narrow
-  passages). If a level is too hard, tune it. Level names are proper names and
-  stay Norwegian.
-- Planned (docs/todo.md section 3): one folder per mode (`levels/crystals/`,
-  `levels/cargo/`, `levels/twoplayer/`), no mode field in the JSON, each mode
-  with its own loader and fields. File names start with a number with gaps
-  (10, 20 ...), sorted numerically. Grotta/Passasjen/Dypet become crystals
-  10/20/70. Add a mode's folder and embed pattern only when the mode exists
-  (`go:embed` fails on an empty folder).
+- Crystals levels: 10 Grotta (intro), 20 Passasjen (gentle step up), 70 Dypet
+  (hard, narrow passages); 30–60 are planned. If a level is too hard, tune it.
+  Level names are proper names and stay Norwegian.
+- Best times are keyed by mode and level name (`crystals/Grotta`).
 
 ## Conventions
 
@@ -76,13 +75,13 @@ Everything outside the world is solid.
 Details and checkboxes in `docs/todo.md`, where the sections are in the order
 they will be done:
 
-1. Browser: best times in localStorage, instructions for non-developers.
-2. Levels: one folder per mode.
-3. New crystals levels 30–60 (analysis tool first: minimum clearance and
+1. Done: browser build with intro page and best times in localStorage;
+   levels in one folder per mode.
+2. Next: new crystals levels 30–60 (analysis tool first: minimum clearance and
    route length per level).
-4. Gamepad (`docs/gamepad.md`).
-5. Cargo on a rope: substeps first, then pendulum, mass, collision,
+3. Gamepad (`docs/gamepad.md`).
+4. Cargo on a rope: substeps first, then pendulum, mass, collision,
    delivery, cargo mode.
-6. Mode chooser (once there are two modes).
-7. Two players in split screen.
-8. Later: in-game level editor.
+5. Mode chooser (once there are two modes).
+6. Two players in split screen.
+7. Later: in-game level editor.

@@ -48,8 +48,8 @@ Keyboard keeps working exactly as before. No touch support: see README.
 
 ### Later
 
-- [ ] `readInput(player int)` so pads can be assigned per player in 2-player mode
-      (structure only, no 2-player yet)
+- [ ] `readInput(player int)` so pads can be assigned per player in 2-player
+      mode (structure only, no 2-player yet)
 - [ ] Optional: analog rotation (needs its own design and tests in `sim`)
 
 ## Done when
