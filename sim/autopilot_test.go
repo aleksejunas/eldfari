@@ -59,9 +59,9 @@ func TestCargoLevelsAreDeliverable(t *testing.T) {
 	// Waypoints for the ship: to the cargo (it hooks on), then a safe way to
 	// the goal pad, ending with the cargo hanging just above it.
 	routes := map[string][]Pt{
-		"Kranen":  {{800, 820}, {800, 450}, {2000, 450}, {2000, 868}},
-		"Lageret": {{610, 600}, {610, 1000}, {610, 1230}, {900, 1290}, {610, 1250}, {610, 500}, {1500, 480}, {2550, 480}, {2550, 818}},
-		"Hylla":   {{600, 1170}, {600, 380}, {1850, 380}, {1850, 418}},
+		"Vindáss": {{800, 820}, {800, 450}, {2000, 450}, {2000, 868}},
+		"Búr":     {{610, 600}, {610, 1000}, {610, 1230}, {900, 1290}, {610, 1250}, {610, 500}, {1500, 480}, {2550, 480}, {2550, 818}},
+		"Hilla":   {{600, 1170}, {600, 380}, {1850, 380}, {1850, 418}},
 	}
 	ls, err := LoadDir(levels.Cargo, ModeCargo)
 	if err != nil {

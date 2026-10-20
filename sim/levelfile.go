@@ -16,7 +16,7 @@ import (
 // down. Every mode has these fields:
 //
 //	{
-//	  "name": "Grotta",
+//	  "name": "Hellir",
 //	  "size": [3200, 1400],
 //	  "polygons": [{"name": "floor", "points": [[0,1100], [320,1100], ...]}],
 //	  "pads":     [{"name": "start", "x0": 100, "x1": 240, "y": 1100}],
@@ -73,7 +73,7 @@ type cargoFile struct {
 }
 
 // LoadDir reads all *.json in fsys as levels for mode and validates them. File
-// names start with a number (10-grotta.json), and the levels are sorted by
+// names start with a number (10-hellir.json), and the levels are sorted by
 // that number, so 100 comes after 90.
 func LoadDir(fsys fs.FS, mode Mode) ([]*Level, error) {
 	names, err := fs.Glob(fsys, "*.json")
@@ -115,7 +115,7 @@ func LoadDir(fsys fs.FS, mode Mode) ([]*Level, error) {
 	return out, nil
 }
 
-// levelNumber returns the number at the start of a file name ("10-grotta.json"
+// levelNumber returns the number at the start of a file name ("10-hellir.json"
 // gives 10).
 func levelNumber(name string) (int, bool) {
 	digits := len(name) - len(strings.TrimLeft(name, "0123456789"))

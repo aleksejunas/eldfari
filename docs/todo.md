@@ -49,22 +49,22 @@ gap goes down from ~7x ship height (20) to ~4x (70).
 
 - [x] Analysis first: `go run ./cmd/levelstat` prints the narrowest gap the
       route must pass and the route length per level (`-png dir` draws them)
-- [x] Run it on 10, 20 and 70: Passasjen is 144 px at its narrowest (under
+- [x] Run it on 10, 20 and 70: Gangr is 144 px at its narrowest (under
       the pillar), not ~180, so the ramp below starts from there
 - [x] Ramp (narrowest gap, route length):
-  - 10 Grotta: open, 272 px, 6.6k px
-  - 20 Passasjen: 144 px (6.9x), 6.9k px
-  - [x] 30 Sprekken: one 130 px crack between two halls, five pads:
+  - 10 Hellir (was Grotta): open, 272 px, 6.6k px
+  - 20 Gangr (was Passasjen): 144 px (6.9x), 6.9k px
+  - [x] 30 Rifa: one 130 px crack between two halls, five pads:
         128 px (6.1x), 8.1k px
-  - [x] 40 Dryppet: short low passage (250 px long) + stalactites:
+  - [x] 40 Dropi: short low passage (250 px long) + stalactites:
         112 px (5.3x), 8.1k px
-  - [x] 50 Langveien: long snake, refuel halfway: 104 px (5.0x), 14.2k px
-  - [x] 60 Sjakta: one wide sloping shaft (168 px) as practice, then a low
+  - [x] 50 Langvegr: long snake, refuel halfway: 104 px (5.0x), 14.2k px
+  - [x] 60 Gjá: one wide sloping shaft (168 px) as practice, then a low
         passage: 96 px (4.6x), 8.5k px
-  - 70 Dypet: narrow passages, sloping tunnel, long route: 79 px (3.7x),
-    8.3k px
+  - 70 Djúp (was Dypet): narrow passages, sloping tunnel, long route:
+    79 px (3.7x), 8.3k px
 - [ ] Every new level is play-tested by someone else (via the web version).
-      Check especially fuel on Langveien
+      Check especially fuel on Langvegr
 
 ## 5. Cargo on a rope (Thrust style) (done)
 
@@ -77,8 +77,8 @@ gap goes down from ~7x ship height (20) to ~4x (70).
        rests calmly on the goal pad
 6. [x] Cargo mode: `levels/cargo/`, own loader (`"cargo"`, `"goal"` pad
        name), `sim.Mode` with a `switch`
-7. [x] Cargo levels: 10 Kranen (over a hill), 20 Lageret (down a shaft into
-       a cellar, out through a tunnel), 30 Hylla (onto a high shelf)
+7. [x] Cargo levels: 10 Vindáss (over a hill), 20 Búr (down a shaft into
+       a cellar, out through a tunnel), 30 Hilla (onto a high shelf)
 8. [x] Temporary key `M` to switch mode (replaced by the menu)
 - [x] Made playable after the first test ("impossible"): hook range 120 px
       with a winch and a ring showing it, cargo mass 0.4, springy damped
@@ -120,5 +120,5 @@ Full plan: [gamepad.md](gamepad.md)
       crystals are taken)
 - [x] Visual effect while refuelling
 - [x] Levels as data (JSON or image) instead of code
-- [ ] Rename the levels to Old Norse (e.g. Grotta -> Hellir). Best times are
-      keyed by level name, so old records need a rename map or are lost
+- [x] Old Norse level names (Grotta -> Hellir, Kranen -> Vindáss, ...);
+      `renamedLevels` in `game/besttimes.go` moves old records

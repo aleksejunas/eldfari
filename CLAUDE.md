@@ -60,21 +60,24 @@ Everything outside the world is solid.
   embedded in `levels/levels.go`. No mode field in the JSON: the folder is
   the mode. A new mode's folder is added to the embed pattern when the mode
   is built (`go:embed` fails on an empty folder).
-- File names start with a number with gaps: `10-grotta.json`. `LoadDir` sorts
+- File names start with a number with gaps: `10-hellir.json`. `LoadDir` sorts
   numerically (100 after 90) and rejects missing or duplicate numbers.
 - Parsed and validated in `sim/levelfile.go`: unknown fields are errors, and
   all problems are reported together (crossing edges, narrow/floating pads,
   clearance above pads and around crystals, spawn). `pads[0]` is start and
   goal. `TestShippedLevelsLoadAndValidate` checks them all.
-- Crystals levels, easy to hard: 10 Grotta, 20 Passasjen, 30 Sprekken, 40
-  Dryppet, 50 Langveien, 60 Sjakta, 70 Dypet. The narrowest gap goes from
-  ~7x ship height (Passasjen, 144 px) down to ~4x (Dypet, 79 px). Check a new
+- Level names are Old Norse; file names are ASCII. Crystals levels, easy to
+  hard: 10 Hellir, 20 Gangr, 30 Rifa, 40 Dropi, 50 Langvegr, 60 Gjá, 70
+  Djúp. The narrowest gap goes from ~7x ship height (Gangr, 144 px) down to
+  ~4x (Djúp, 79 px). Check a new
   or changed level with `go run ./cmd/levelstat`. If a level is too hard,
   tune it. Level names are proper names and stay Norwegian.
 - Cargo levels add `"cargo": [x, y]` and `"goal": "pad name"` instead of
-  crystals: 10 Kranen, 20 Lageret, 30 Hylla. `cmd/levelstat` only handles
+  crystals: 10 Vindáss, 20 Búr, 30 Hilla. `cmd/levelstat` only handles
   crystals levels.
-- Best times are keyed by mode and level name (`crystals/Grotta`).
+- Best times are keyed by mode and level name (`crystals/Hellir`). When a
+  level is renamed, add the old key to `renamedLevels` in
+  `game/besttimes.go` so records are kept.
 
 ## Conventions
 
