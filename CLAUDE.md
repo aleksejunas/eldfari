@@ -73,7 +73,8 @@ Everything outside the world is solid.
   or changed level with `go run ./cmd/levelstat`. If a level is too hard,
   tune it. Level names are proper names and stay Norwegian.
 - Cargo levels add `"cargo": [x, y]` and `"goal": "pad name"` instead of
-  crystals: 10 Vindáss, 20 Búr, 30 Hilla. `cmd/levelstat` only handles
+  crystals, easy to hard: 10 Vindáss, 20 Búr, 30 Hilla, 40 Grjót, 50
+  Langferð, 60 Ljóri, 70 Myrkr. `cmd/levelstat` only handles
   crystals levels.
 - Best times are keyed by mode and level name (`crystals/Hellir`). Renaming
   a level loses its records, which is fine.

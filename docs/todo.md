@@ -77,8 +77,15 @@ gap goes down from ~7x ship height (20) to ~4x (70).
        rests calmly on the goal pad
 6. [x] Cargo mode: `levels/cargo/`, own loader (`"cargo"`, `"goal"` pad
        name), `sim.Mode` with a `switch`
-7. [x] Cargo levels: 10 Vindáss (over a hill), 20 Búr (down a shaft into
-       a cellar, out through a tunnel), 30 Hilla (onto a high shelf)
+7. [x] Cargo levels, easy to hard:
+       - 10 Vindáss: over a hill
+       - 20 Búr: down a shaft into a cellar, out through a tunnel
+       - 30 Hilla: onto a high shelf
+       - 40 Grjót: slalom between stalactites and stalagmites
+       - 50 Langferð: long tunnel with a lower part, refuel pad halfway
+       - 60 Ljóri: S-shaped chimney, deliver at the top
+       - 70 Myrkr: down into a pit, 200 px tunnel with the cargo, up a
+         shaft to a small ledge
 8. [x] Temporary key `M` to switch mode (replaced by the menu)
 - [x] Made playable after the first test ("impossible"): hook range 120 px
       with a winch and a ring showing it, cargo mass 0.4, springy damped
