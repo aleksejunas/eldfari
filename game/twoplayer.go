@@ -105,28 +105,58 @@ func (g *Game) drawTwoPlayer(screen *ebiten.Image) {
 	g.drawTwoPlayerHUD(screen)
 }
 
-// drawPlayerHUD draws player i's fuel (and health in a duel) in the top left
-// of its half, and a countdown while it waits to start again.
+// drawPlayerHUD draws player i's fuel (and health in a duel) and keys in
+// its half: player 1 at the left edge, player 2 mirrored at the right edge,
+// so neither runs into the score in the middle. Also a countdown while the
+// player waits to start again.
 func (g *Game) drawPlayerHUD(dst *ebiten.Image, i int) {
 	p := &g.players()[i]
+	W, H := float64(dst.Bounds().Dx())/g.scale, float64(dst.Bounds().Dy())/g.scale
 	small := g.face(fontText, sizeSmall)
-	x := margin + g.print(dst, "FUEL   ", margin, margin, small, text.AlignStart, colDim)
-	g.rect(dst, x, margin+4, fuelBarW*p.Ship.Fuel, fuelBarH, colPad)
-	g.strokeRect(dst, x, margin+4, fuelBarW, fuelBarH, colDim)
-	if g.duel != nil {
-		y := margin + 20
-		g.print(dst, "HEALTH ", margin, y, small, text.AlignStart, colDim)
-		healthCol := playerCol[i]
-		if p.Health <= sim.BulletDamage {
-			healthCol = colTerrain
-		}
-		g.rect(dst, x, y+4, fuelBarW*p.Health, fuelBarH, healthCol)
-		g.strokeRect(dst, x, y+4, fuelBarW, fuelBarH, colDim)
+	labelW := g.textWidth("HEALTH  ", small) // same for both labels, so the bars line up
+	x := margin
+	if i == 1 {
+		x = W - margin - labelW - fuelBarW
 	}
+	bar := func(y float64, label string, v float64, col color.RGBA) {
+		g.print(dst, label, x, y, small, text.AlignStart, colDim)
+		g.rect(dst, x+labelW, y+4, fuelBarW*v, fuelBarH, col)
+		g.strokeRect(dst, x+labelW, y+4, fuelBarW, fuelBarH, colDim)
+	}
+	bar(margin, "FUEL", p.Ship.Fuel, colPad)
+	if g.duel != nil {
+		col := playerCol[i]
+		if p.Health <= sim.BulletDamage {
+			col = colTerrain
+		}
+		bar(margin+20, "HEALTH", p.Health, col)
+	}
+
+	keys := [2]string{"A/D turn  ·  W thrust", "← → turn  ·  ↑ thrust"}
+	if g.duel != nil {
+		keys = [2]string{"A/D turn  ·  W thrust  ·  S fire", "← → turn  ·  ↑ thrust  ·  ↓ fire"}
+	}
+	if i == 0 {
+		g.print(dst, keys[0], margin, H-margin-sizeSmall, small, text.AlignStart, colDim)
+	} else {
+		g.print(dst, keys[1], W-margin, H-margin-sizeSmall, small, text.AlignEnd, colDim)
+	}
+
 	if !p.Alive() && g.winner() < 0 {
-		W, H := float64(dst.Bounds().Dx())/g.scale, float64(dst.Bounds().Dy())/g.scale
 		g.print(dst, fmt.Sprintf("back in %.0f", p.Respawn+0.5), W/2, H*0.3, g.face(fontTitle, sizeText), text.AlignCenter, colDim)
 	}
+}
+
+// textWidth is the width of s in window pixels (like the HUD positions).
+func (g *Game) textWidth(s string, face *text.GoTextFace) float64 {
+	return text.AdvanceAt(s, len(s), face) / g.scale
+}
+
+// badge draws a box in the background colour with a thin frame, centred on
+// x, so text on top of the divider between the halves stays readable.
+func (g *Game) badge(dst *ebiten.Image, x, y, w, h float64) {
+	g.rect(dst, x-w/2, y, w, h, colBG)
+	g.strokeRect(dst, x-w/2, y, w, h, colDim)
 }
 
 // winner is the duel's or race's Winner: -1 while it goes on.
@@ -137,23 +167,25 @@ func (g *Game) winner() int {
 	return g.race.Winner
 }
 
-// drawTwoPlayerHUD draws the score in the middle at the top, the winner and
-// the keys.
+// drawTwoPlayerHUD draws what belongs to both players in the middle, on
+// boxes over the divider: the score and level at the top, the winner or a
+// message, and the common keys at the bottom.
 func (g *Game) drawTwoPlayerHUD(screen *ebiten.Image) {
 	W, H := float64(g.w)/g.scale, float64(g.h)/g.scale
 	ps := g.players()
 	bigNum := g.face(fontNum, sizeBig)
+	small := g.face(fontText, sizeSmall)
 	normal := g.face(fontText, sizeText)
-	g.print(screen, fmt.Sprint(ps[0].Score), W/2-14, margin-6, bigNum, text.AlignEnd, playerCol[0])
-	g.print(screen, fmt.Sprint(ps[1].Score), W/2+14, margin-6, bigNum, text.AlignStart, playerCol[1])
 
 	label := fmt.Sprintf("%s  ·  FIRST TO %d", g.world.Level.Name, sim.DuelScore)
-	help := "P1: A/D turn · W thrust · S fire        P2: ← → turn · ↑ thrust · ↓ fire        R restart · M menu"
 	if g.race != nil {
 		label = fmt.Sprintf("%s  ·  %d CRYSTALS LEFT", g.world.Level.Name, g.race.Left())
-		help = "P1: A/D turn · W thrust        P2: ← → turn · ↑ thrust        R restart · M menu"
 	}
-	g.print(screen, label, W/2, margin+30, g.face(fontText, sizeSmall), text.AlignCenter, colDim)
+	g.badge(screen, W/2, margin-10, g.textWidth(label, small)+32, 66)
+	g.print(screen, fmt.Sprint(ps[0].Score), W/2-14, margin-6, bigNum, text.AlignEnd, playerCol[0])
+	g.print(screen, ":", W/2, margin-6, bigNum, text.AlignCenter, colDim)
+	g.print(screen, fmt.Sprint(ps[1].Score), W/2+14, margin-6, bigNum, text.AlignStart, playerCol[1])
+	g.print(screen, label, W/2, margin+32, small, text.AlignCenter, colDim)
 
 	msg, sub, col := "", "", colShip
 	switch w := g.winner(); {
@@ -165,8 +197,14 @@ func (g *Game) drawTwoPlayerHUD(screen *ebiten.Image) {
 		msg, sub, col = "ALL CRYSTALS TAKEN", "land on a pad", colGem
 	}
 	if msg != "" {
-		g.print(screen, msg, W/2, H*0.22, g.face(fontTitle, sizeBig), text.AlignCenter, col)
+		big := g.face(fontTitle, sizeBig)
+		w := max(g.textWidth(msg, big), g.textWidth(sub, normal)) + 48
+		g.badge(screen, W/2, H*0.22-14, w, 82)
+		g.print(screen, msg, W/2, H*0.22, big, text.AlignCenter, col)
 		g.print(screen, sub, W/2, H*0.22+34, normal, text.AlignCenter, colDim)
 	}
-	g.print(screen, help, W/2, H-margin-sizeSmall, g.face(fontText, sizeSmall), text.AlignCenter, colDim)
+
+	common := "R restart  ·  M menu"
+	g.badge(screen, W/2, H-margin-sizeSmall-8, g.textWidth(common, small)+28, sizeSmall+16)
+	g.print(screen, common, W/2, H-margin-sizeSmall, small, text.AlignCenter, colDim)
 }
