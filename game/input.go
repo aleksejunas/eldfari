@@ -38,8 +38,11 @@ const (
 // PDP Afterglow Wireless Deluxe (Switch) over Bluetooth ("Lic Pro
 // Controller"): without this, ZR/ZL read as RB/LB and + as RT, so + gave
 // thrust and ZR did nothing. Over the USB cable it sends no input at all.
+// Nintendo's X is the top button (standard y) and Y the left one (x). Not
+// measured yet: -, d-pad up/down, the right stick.
 const extraMappings = "050000006f0e00008601000001000000,Lic Pro Controller," +
-	"a:b0,b:b1,lefttrigger:b6,righttrigger:b7,start:b9,dpleft:b19,dpright:b17,leftx:a0,lefty:a1,platform:Linux,\n"
+	"a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,lefttrigger:b6,righttrigger:b7,start:b9," +
+	"dpleft:b19,dpright:b17,leftx:a0,lefty:a1,platform:Linux,\n"
 
 func init() {
 	if _, err := ebiten.UpdateStandardGamepadLayoutMappings(extraMappings); err != nil {
