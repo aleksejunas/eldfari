@@ -21,7 +21,6 @@ import (
 const (
 	stickOn   = 0.3 // the stick starts turning past this
 	stickOff  = 0.2 // and stops below this, so it doesn't flicker
-	triggerOn = 0.3 // RT counts as thrust past this
 	menuStick = 0.5 // the stick moves the menu one step past this
 
 	// minPadButtons tells a real controller from the extra devices some
@@ -34,8 +33,10 @@ const (
 
 // padState is what one pad does right now.
 type padState struct {
-	stickX              float64 // left stick, -1 left .. 1 right
-	trigger             float64 // RT, 0 .. 1
+	stickX float64 // left stick, -1 left .. 1 right
+	// RT pressed. Ebitengine's pressed state, not the 0..1 value: a PDP
+	// Switch controller has digital triggers that read 0.5 at rest.
+	rt                  bool
 	dpadLeft, dpadRight bool
 	a, b                bool
 }
@@ -52,7 +53,7 @@ func padInput(st padState, stick *stickState) sim.Input {
 	return sim.Input{
 		Left:   stick.left || st.dpadLeft,
 		Right:  stick.right || st.dpadRight,
-		Thrust: st.trigger > triggerOn,
+		Thrust: st.rt,
 		Fire:   st.a,
 		Bomb:   st.b,
 	}
@@ -62,7 +63,7 @@ func readPad(id ebiten.GamepadID) padState {
 	pressed := func(b ebiten.StandardGamepadButton) bool { return ebiten.IsStandardGamepadButtonPressed(id, b) }
 	return padState{
 		stickX:    ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickHorizontal),
-		trigger:   ebiten.StandardGamepadButtonValue(id, ebiten.StandardGamepadButtonFrontBottomRight),
+		rt:        pressed(ebiten.StandardGamepadButtonFrontBottomRight),
 		dpadLeft:  pressed(ebiten.StandardGamepadButtonLeftLeft),
 		dpadRight: pressed(ebiten.StandardGamepadButtonLeftRight),
 		a:         pressed(ebiten.StandardGamepadButtonRightBottom),

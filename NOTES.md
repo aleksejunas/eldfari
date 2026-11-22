@@ -34,6 +34,7 @@ Rewrite this file instead of appending. Max ~40 lines.
   so pad and keyboard are equal. First pad = player 1.
 - Pads need 6+ buttons: on Linux a PS4 pad is also its motion sensors and
   touchpad (same name), which gave stuck thrust and turning.
+- RT uses Ebitengine's pressed state: a PDP Switch pad reads 0.5 at rest.
 - Bombs as a second weapon: aiming the nose while flying was too hard.
 
 ## Known problems

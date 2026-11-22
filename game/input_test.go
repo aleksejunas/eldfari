@@ -26,13 +26,13 @@ func TestPadStickDeadZoneAndHysteresis(t *testing.T) {
 
 func TestPadButtons(t *testing.T) {
 	var s stickState
-	in := padInput(padState{dpadLeft: true, trigger: 0.2}, &s)
+	in := padInput(padState{dpadLeft: true}, &s)
 	if !in.Left || in.Thrust {
-		t.Errorf("d-pad left with RT at 0.2: %+v, want left and no thrust", in)
+		t.Errorf("d-pad left: %+v, want left and no thrust", in)
 	}
-	in = padInput(padState{trigger: 0.5, a: true, b: true}, &s)
+	in = padInput(padState{rt: true, a: true, b: true}, &s)
 	if !in.Thrust || !in.Fire || !in.Bomb {
-		t.Errorf("RT 0.5 + A + B: %+v, want thrust, fire and bomb", in)
+		t.Errorf("RT + A + B: %+v, want thrust, fire and bomb", in)
 	}
 }
 
