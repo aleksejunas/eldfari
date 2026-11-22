@@ -26,8 +26,8 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
   `World.Step` switches on it. Cargo mode lives in `sim/cargo.go` (rope,
   cargo, delivery) and `game/cargo.go` (drawing). Duel (`sim/duel.go`) and
   race (`sim/race.go`) give each player a World sharing the Level;
-  `game/twoplayer.go` draws the split screen for both. The menu (`game/menu.go`, `M`/`Esc`)
-  chooses mode and level; the game starts in it.
+  `game/twoplayer.go` draws the split screen for both. The menu
+  (`game/menu.go`, `M`/`Esc`) chooses mode and level; the game starts in it.
 - Browser build: `web/index.html` + GitHub Actions (`.github/workflows/`)
   deploys to GitHub Pages on every push to `master`.
 
