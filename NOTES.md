@@ -34,6 +34,8 @@ Rewrite this file instead of appending. Max ~40 lines.
   P2 RCtrl fire, RAlt bomb. S/↓ shared a finger with thrust.
 - Gamepad: RT thrust, A fire, B bomb (user's choice); turning stays digital
   so pad and keyboard are equal. First pad = player 1.
+- Pads need 6+ buttons: on Linux a PS4 pad is also its motion sensors and
+  touchpad (same name), which gave stuck thrust and turning.
 - Bombs as a second weapon: aiming the nose while flying was too hard.
 
 ## Known problems

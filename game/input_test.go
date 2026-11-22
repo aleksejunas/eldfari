@@ -35,3 +35,24 @@ func TestPadButtons(t *testing.T) {
 		t.Errorf("RT 0.5 + A + B: %+v, want thrust, fire and bomb", in)
 	}
 }
+
+// A PS4 controller on Linux is three devices with the same name: only the one
+// with real buttons is the controller (numbers from the user's machine).
+func TestOnlyRealControllersCount(t *testing.T) {
+	cases := []struct {
+		name     string
+		standard bool
+		buttons  int
+		want     bool
+	}{
+		{"PS4 controller", true, 17, true},
+		{"PS4 motion sensors", true, 0, false},
+		{"PS4 touchpad", true, 4, false},
+		{"laptop touchpad", false, 7, false},
+	}
+	for _, c := range cases {
+		if got := isController(c.standard, c.buttons); got != c.want {
+			t.Errorf("%s: isController = %v, want %v", c.name, got, c.want)
+		}
+	}
+}

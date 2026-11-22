@@ -23,6 +23,13 @@ const (
 	stickOff  = 0.2 // and stops below this, so it doesn't flicker
 	triggerOn = 0.3 // RT counts as thrust past this
 	menuStick = 0.5 // the stick moves the menu one step past this
+
+	// minPadButtons tells a real controller from the extra devices some
+	// controllers bring. On Linux a PS4 controller also shows up as its
+	// motion sensors (0 buttons, an axis that reads as a half-pressed
+	// trigger) and its touchpad (4 buttons, a stick stuck at -1), with the
+	// same name and standard layout as the controller itself.
+	minPadButtons = 6
 )
 
 // padState is what one pad does right now.
@@ -65,21 +72,27 @@ func readPad(id ebiten.GamepadID) padState {
 
 var warnedPads = map[ebiten.GamepadID]bool{}
 
-// pads returns the connected pads with a standard layout, in a fixed order:
-// the first is player 1's, the second player 2's. Others are skipped (and
-// logged once).
+// pads returns the connected controllers, in a fixed order: the first is
+// player 1's, the second player 2's. Other devices are skipped (and logged
+// once).
 func pads() []ebiten.GamepadID {
 	var out []ebiten.GamepadID
 	for _, id := range ebiten.AppendGamepadIDs(nil) {
-		if ebiten.IsStandardGamepadLayoutAvailable(id) {
+		if isController(ebiten.IsStandardGamepadLayoutAvailable(id), ebiten.GamepadButtonCount(id)) {
 			out = append(out, id)
 		} else if !warnedPads[id] {
 			warnedPads[id] = true
-			log.Printf("gamepad %q has no standard layout and is ignored", ebiten.GamepadName(id))
+			log.Printf("ignoring %q: no standard layout or too few buttons to be a controller", ebiten.GamepadName(id))
 		}
 	}
 	slices.Sort(out)
 	return out
+}
+
+// isController reports whether a gamepad device is a real controller, not
+// the motion sensors or touchpad that come along with some.
+func isController(standardLayout bool, buttons int) bool {
+	return standardLayout && buttons >= minPadButtons
 }
 
 // readInput combines the keyboard and a pad for a player: 0 or 1 in the
