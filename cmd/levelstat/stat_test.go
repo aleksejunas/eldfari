@@ -52,3 +52,36 @@ func TestUnreachableCrystal(t *testing.T) {
 		t.Error("a crystal inside rock should make the level fail")
 	}
 }
+
+// Cargo level: two rooms joined by a corridor of the given height. The ship
+// starts in the left room, the cargo rests there too, the goal is right.
+func cargoCorridor(height float64) *sim.Level {
+	top, bottom := 450-height/2, 450+height/2
+	mountain := pts([][2]float64{{0, 0}, {1400, 0}, {1400, 900}, {0, 900}})
+	cave := pts([][2]float64{
+		{100, 100}, {500, 100}, {500, top}, {900, top}, {900, 100}, {1300, 100},
+		{1300, 800}, {900, 800}, {900, bottom}, {500, bottom}, {500, 800}, {100, 800},
+	})
+	pads := []sim.Pad{{X0: 120, X1: 270, Y: 800}, {X0: 1050, X1: 1250, Y: 800}}
+	l := sim.NewLevel(1400, 900, [][]sim.Pt{mountain, cave}, pads, sim.Pt{X: 195, Y: 800 - sim.ShipRear - 0.5})
+	l.Mode = sim.ModeCargo
+	l.CargoStart = sim.Pt{X: 380, Y: 800 - sim.CargoRadius - 0.5}
+	l.Goal = 1
+	return l
+}
+
+func TestCargoNeedsRoomForTheHangingCargo(t *testing.T) {
+	// The ship with the cargo hanging below is 100 px tall (12 above its
+	// centre, 80 px rope, cargo radius 8): 90 px is enough for the ship alone,
+	// but too low with the cargo.
+	if _, st := analyse(cargoCorridor(90)); st.ok {
+		t.Error("a 90 px corridor should be too low to carry the cargo through")
+	}
+	_, st := analyse(cargoCorridor(220))
+	if !st.ok {
+		t.Fatal("a 220 px corridor should be high enough")
+	}
+	if math.Abs(st.gap-220) > 2*cell {
+		t.Errorf("gap = %.0f, want about 220", st.gap)
+	}
+}

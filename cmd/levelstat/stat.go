@@ -115,8 +115,9 @@ func (g *grid) neighbours(i int, f func(n int, step float64)) {
 }
 
 // distances returns the shortest path length in px from cell src to every
-// cell, moving only through cells where the ship fits.
-func (g *grid) distances(src int) []float64 {
+// cell, moving only through cells where the ship fits, and with loaded also
+// the cargo hanging RopeLength below it.
+func (g *grid) distances(src int, loaded bool) []float64 {
 	dist := make([]float64, len(g.clear))
 	for i := range dist {
 		dist[i] = math.Inf(1)
@@ -129,7 +130,7 @@ func (g *grid) distances(src int) []float64 {
 			continue
 		}
 		g.neighbours(it.i, func(n int, step float64) {
-			if g.clear[n] < shipRadius {
+			if g.clear[n] < shipRadius || loaded && !g.cargoFits(n) {
 				return
 			}
 			if d := it.v + step; d < dist[n] {
@@ -139,6 +140,14 @@ func (g *grid) distances(src int) []float64 {
 		})
 	}
 	return dist
+}
+
+// cargoFits reports whether the cargo fits hanging straight below cell i
+// (RopeLength down), with free air for the rope halfway.
+func (g *grid) cargoFits(i int) bool {
+	rows := int(sim.RopeLength / cell)
+	cargo, rope := i+rows*g.w, i+rows/2*g.w
+	return cargo < len(g.clear) && g.clear[cargo] >= sim.CargoRadius && g.clear[rope] > 0
 }
 
 // bottleneck returns the widest way from cell a to cell b: the largest
@@ -233,17 +242,22 @@ type stats struct {
 	ok         bool    // false if some crystal can't be reached
 }
 
-// analyse visits the crystals in nearest-first order (by path length) from the
-// start pad and back. It is a reasonable route, not always the shortest one.
+// analyse finds a route through the level and its numbers. Crystals: visit
+// the crystals nearest-first (by path length) from the start pad and back, a
+// reasonable route, not always the shortest. Cargo: fly empty to above the
+// cargo, then carry it to above the goal pad.
 func analyse(l *sim.Level) (*grid, stats) {
 	g := newGrid(l)
+	if l.Mode == sim.ModeCargo {
+		return g, analyseCargo(g, l)
+	}
 	points := append([]sim.Pt{l.Start}, l.Crystals...)
 
 	cells := make([]int, len(points))
 	dists := make([][]float64, len(points))
 	for i, p := range points {
 		cells[i] = g.openest(p)
-		dists[i] = g.distances(cells[i])
+		dists[i] = g.distances(cells[i], false)
 	}
 
 	st := stats{gap: math.Inf(1), ok: true}
@@ -257,27 +271,41 @@ func analyse(l *sim.Level) (*grid, stats) {
 				next = j
 			}
 		}
-		st.leg(g, dists, cells, cur, next)
+		st.leg(g, dists[cur], cells[cur], cells[next], true)
 		visited[next], cur = true, next
 	}
-	st.leg(g, dists, cells, cur, 0)
+	st.leg(g, dists[cur], cells[cur], cells[0], true)
 	return g, st
 }
 
-// leg adds the way from point a to point b to the stats.
-func (st *stats) leg(g *grid, dists [][]float64, cells []int, a, b int) {
-	d := dists[a][cells[b]]
+func analyseCargo(g *grid, l *sim.Level) stats {
+	goal := l.Pads[l.Goal]
+	start := g.openest(l.Start)
+	hook := g.openest(sim.Pt{X: l.CargoStart.X, Y: l.CargoStart.Y - sim.RopeLength})
+	drop := g.openest(sim.Pt{X: (goal.X0 + goal.X1) / 2, Y: goal.Y - sim.CargoRadius - sim.RopeLength})
+
+	st := stats{gap: math.Inf(1), ok: true}
+	st.leg(g, g.distances(start, false), start, hook, false)
+	st.leg(g, g.distances(hook, true), hook, drop, true)
+	return st
+}
+
+// leg adds the way from cell a to cell b to the stats. dist holds the path
+// lengths from a. With measureGap, its narrowest passage counts for the gap:
+// in cargo mode only the leg with the cargo is the hard part.
+func (st *stats) leg(g *grid, dist []float64, a, b int, measureGap bool) {
+	d := dist[b]
 	if math.IsInf(d, 1) {
 		st.ok = false
 		return
 	}
 	st.route += d
 	st.longestLeg = math.Max(st.longestLeg, d)
-	if w, at := g.bottleneck(cells[a], cells[b]); 2*w < st.gap {
+	if w, at := g.bottleneck(a, b); measureGap && 2*w < st.gap {
 		x, y := g.centre(at)
 		st.gap, st.gapAt = 2*w, sim.Pt{X: x, Y: y}
 	}
-	st.path = append(st.path, g.walk(dists[a], cells[b])...)
+	st.path = append(st.path, g.walk(dist, b)...)
 }
 
 // walk follows decreasing distance from cell to the source of dist.

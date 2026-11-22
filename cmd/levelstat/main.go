@@ -1,9 +1,10 @@
-// Command levelstat prints difficulty numbers for the crystals levels: the
-// narrowest gap the route must pass and the route length.
+// Command levelstat prints difficulty numbers per level: the narrowest gap the
+// route must pass and the route length. Cargo levels are measured from the
+// start to the cargo, then to the goal with the cargo hanging in the rope.
 //
-//	go run ./cmd/levelstat                 # the embedded levels
-//	go run ./cmd/levelstat -png /tmp/maps  # also write a picture per level
-//	go run ./cmd/levelstat path/to/dir     # levels in another folder
+//	go run ./cmd/levelstat                       # all embedded levels
+//	go run ./cmd/levelstat -png /tmp/maps        # also write a picture per level
+//	go run ./cmd/levelstat -mode cargo some/dir  # levels in another folder
 package main
 
 import (
@@ -13,9 +14,11 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"eldfari/levels"
@@ -26,31 +29,53 @@ const shipHeight = 21.0 // px, nose to rear
 
 func main() {
 	pngDir := flag.String("png", "", "write a picture of each level and its route to this folder")
+	mode := flag.String("mode", "", `"crystals" or "cargo" (default: both, or crystals for a folder)`)
 	flag.Parse()
 
-	fsys := levels.Crystals
-	if flag.NArg() > 0 {
-		fsys = os.DirFS(flag.Arg(0))
+	type set struct {
+		mode sim.Mode
+		fsys fs.FS
 	}
-	ls, err := sim.LoadDir(fsys, sim.ModeCrystals)
-	if err != nil {
-		log.Fatal(err)
+	sets := []set{{sim.ModeCrystals, levels.Crystals}, {sim.ModeCargo, levels.Cargo}}
+	if flag.NArg() > 0 {
+		sets = []set{{sim.ModeCrystals, os.DirFS(flag.Arg(0))}}
+		if *mode == "cargo" {
+			sets[0].mode = sim.ModeCargo
+		}
+	} else if *mode != "" {
+		sets = slices.DeleteFunc(sets, func(s set) bool { return modeName(s.mode) != *mode })
 	}
 
-	fmt.Printf("%-12s %9s %7s %8s %8s %8s %5s\n", "level", "gap px", "ships", "route", "longest", "crystal", "pads")
-	for _, l := range ls {
-		g, st := analyse(l)
-		if !st.ok {
-			fmt.Printf("%-12s some crystal can't be reached with %.0f px clearance\n", l.Name, shipRadius)
-			continue
+	for _, s := range sets {
+		ls, err := sim.LoadDir(s.fsys, s.mode)
+		if err != nil {
+			log.Fatal(err)
 		}
-		fmt.Printf("%-12s %9.0f %6.1fx %8.0f %8.0f %8d %5d   narrowest at (%.0f,%.0f)\n",
-			l.Name, st.gap, st.gap/shipHeight, st.route, st.longestLeg, len(l.Crystals), len(l.Pads),
-			st.gapAt.X, st.gapAt.Y)
-		if *pngDir != "" {
-			if err := writePNG(*pngDir, l, g, st); err != nil {
-				log.Fatal(err)
-			}
+		fmt.Printf("\n%-12s %9s %7s %8s %8s %5s\n", strings.ToUpper(modeName(s.mode)), "gap px", "ships", "route", "longest", "pads")
+		for _, l := range ls {
+			report(l, *pngDir)
+		}
+	}
+}
+
+func modeName(m sim.Mode) string {
+	if m == sim.ModeCargo {
+		return "cargo"
+	}
+	return "crystals"
+}
+
+func report(l *sim.Level, pngDir string) {
+	g, st := analyse(l)
+	if !st.ok {
+		fmt.Printf("%-12s can't be done: the ship (or the ship with the cargo) doesn't fit\n", l.Name)
+		return
+	}
+	fmt.Printf("%-12s %9.0f %6.1fx %8.0f %8.0f %5d   narrowest at (%.0f,%.0f)\n",
+		l.Name, st.gap, st.gap/shipHeight, st.route, st.longestLeg, len(l.Pads), st.gapAt.X, st.gapAt.Y)
+	if pngDir != "" {
+		if err := writePNG(pngDir, l, g, st); err != nil {
+			log.Fatal(err)
 		}
 	}
 }

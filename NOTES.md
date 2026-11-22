@@ -4,16 +4,16 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: cargo mode has seven levels (40–70 new).
+- Nothing in progress. Last done: `cmd/levelstat` measures cargo levels
+  (gap only on the leg with the cargo; the empty leg is the easy part).
 
 ## Next
 
 1. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
    `RopeLength`, `HookRange` in `sim/cargo.go`.
 2. Play-test crystals levels 30–60, especially fuel on Langvegr.
-3. `cmd/levelstat` for cargo levels (gap with the cargo hanging, route).
-4. Gamepad (`docs/gamepad.md`).
-5. Two players in split screen.
+3. Gamepad (`docs/gamepad.md`).
+4. Two players in split screen.
 
 ## Decisions
 
@@ -31,4 +31,3 @@ Rewrite this file instead of appending. Max ~40 lines.
 - On a cargo win the ship freezes in mid-air under "DELIVERED!".
 - The web version lags on power saver: WASM is single-threaded and the
   antialiased lines are the main cost per frame.
-- `cmd/levelstat` only measures crystals levels.

@@ -74,8 +74,8 @@ Everything outside the world is solid.
   tune it. Level names are proper names and stay Norwegian.
 - Cargo levels add `"cargo": [x, y]` and `"goal": "pad name"` instead of
   crystals, easy to hard: 10 Vindáss, 20 Búr, 30 Hilla, 40 Grjót, 50
-  Langferð, 60 Ljóri, 70 Myrkr. `cmd/levelstat` only handles
-  crystals levels.
+  Langferð, 60 Ljóri, 70 Myrkr. `cmd/levelstat` measures them
+  with the cargo hanging below the ship (gap 200–424 px).
 - Best times are keyed by mode and level name (`crystals/Hellir`). Renaming
   a level loses its records, which is fine.
 

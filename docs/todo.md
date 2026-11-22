@@ -92,7 +92,8 @@ gap goes down from ~7x ship height (20) to ~4x (70).
       rope, swing damping; an autopilot test delivers every cargo level
 - [ ] Play-test the cargo levels again; tune the constants in
       `sim/cargo.go`
-- [ ] `cmd/levelstat` only measures crystals levels so far
+- [x] `cmd/levelstat` measures cargo levels too: the leg with the cargo
+      needs room for the cargo hanging 80 px below the ship
 
 ## 6. Mode chooser (done)
 
