@@ -91,6 +91,24 @@ Everything outside the world is solid.
 - Browser/WASM code (`web/`, workflow, browser storage): the user writes it
   themselves. Explain and give code to copy, do not edit those files.
 
+## Working style (save tokens)
+
+- Read `NOTES.md` first; don't explore the repo for an overview. Ask if
+  something is unclear.
+- Search (`rg`/`grep`) before reading; read only the relevant lines. Don't
+  read files over ~200 lines without reason, and don't re-read a file after
+  editing it. Don't dump level JSON; use `jq`.
+- Limit output: `go build ./... 2>&1 | tail -30`,
+  `go test ./... 2>&1 | tail -40`. No `-v` unless asked or a test fails.
+- Don't run the game to check it; the user tests gameplay.
+- Short answers: no recap of what was just done, no repeated code. Show a
+  diff or file names, not whole files. For choices: 2–3 lines per option,
+  then a recommendation. No subagents unless asked.
+- After each finished step or decision, rewrite `NOTES.md` (max ~40 lines:
+  Now, Next, Decisions, Known problems) and commit with a message that says
+  why. When a task is done: update `NOTES.md`, commit, and say "ferdig, bra
+  tidspunkt for ny økt".
+
 ## Roadmap
 
 Details and checkboxes in `docs/todo.md`, where the sections are in the order
