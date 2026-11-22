@@ -14,8 +14,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 3. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
    `RopeLength`, `HookRange` in `sim/cargo.go`.
 4. Play-test crystals levels 30–60, especially fuel on Langvegr.
-5. Test the gamepads (PS4, Switch over Bluetooth): stick drift, unplugging
-   mid-flight, the menu.
+5. Joy-Cons and more controllers: `go run ./cmd/padlisten`, then a line in
+   `extraMappings` (game/input.go).
 
 ## Decisions
 

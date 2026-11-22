@@ -107,7 +107,11 @@ Full plan: [gamepad.md](gamepad.md)
 
 - [x] Keyboard and gamepad input merged in `readInput(player)`; one pad
       per player; RT thrust, A fire, B bomb
-- [ ] Tested on real hardware (PS4 and Switch over Bluetooth)
+- [x] Tested on real hardware: PS4 (USB and Bluetooth), PDP Switch pad
+      (Bluetooth only; own mapping in `extraMappings`)
+- [ ] Joy-Cons: measure with `go run ./cmd/padlisten`, add to `extraMappings`
+- [ ] More controllers: measure each new one the same way
+- [ ] Check the PS4 pad in the web version (browser mapping differs)
 
 ## 8. Two players (what Turboraketti really was)
 
