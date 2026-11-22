@@ -105,8 +105,9 @@ gap goes down from ~7x ship height (20) to ~4x (70).
 
 Full plan: [gamepad.md](gamepad.md)
 
-- [ ] Keyboard and gamepad input merged in one `readInput()`
-- [ ] Tested on real hardware (xbox/playstation pad, Steam Deck)
+- [x] Keyboard and gamepad input merged in `readInput(player)`; one pad
+      per player; RT thrust, A fire, B bomb
+- [ ] Tested on real hardware (PS4 and Switch over Bluetooth)
 
 ## 8. Two players (what Turboraketti really was)
 

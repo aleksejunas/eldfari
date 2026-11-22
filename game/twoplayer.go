@@ -53,14 +53,8 @@ func (g *Game) resetTwoPlayer() {
 	}
 }
 
-func (g *Game) updateTwoPlayer() {
-	key := ebiten.IsKeyPressed
-	in := [2]sim.Input{
-		{Left: key(ebiten.KeyA), Right: key(ebiten.KeyD), Thrust: key(ebiten.KeyW),
-			Fire: key(ebiten.KeyShiftLeft), Bomb: key(ebiten.KeySpace)},
-		{Left: key(ebiten.KeyArrowLeft), Right: key(ebiten.KeyArrowRight), Thrust: key(ebiten.KeyArrowUp),
-			Fire: key(ebiten.KeyControlRight), Bomb: key(ebiten.KeyAltRight)},
-	}
+func (g *Game) updateTwoPlayer(ids []ebiten.GamepadID) {
+	in := [2]sim.Input{g.readInput(0, ids), g.readInput(1, ids)}
 	if g.duel != nil {
 		g.duel.Step(in)
 	} else {

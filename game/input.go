@@ -1,0 +1,151 @@
+package game
+
+import (
+	"log"
+	"slices"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"eldfari/sim"
+)
+
+// Input: the keyboard and gamepads together. Pads use Ebitengine's standard
+// layout, so PS4, Switch and Xbox controllers give the same buttons. Names
+// here follow Xbox: A is the bottom face button (PS4 ×), B the right one
+// (PS4 ○), Y the top one (PS4 △), RT the right trigger (PS4 R2).
+//
+// Flying: left stick or d-pad turns, RT thrust, A fire, B bomb. Player 1
+// has the first pad, player 2 the second; the keyboard works as well.
+
+const (
+	stickOn   = 0.3 // the stick starts turning past this
+	stickOff  = 0.2 // and stops below this, so it doesn't flicker
+	triggerOn = 0.3 // RT counts as thrust past this
+	menuStick = 0.5 // the stick moves the menu one step past this
+)
+
+// padState is what one pad does right now.
+type padState struct {
+	stickX              float64 // left stick, -1 left .. 1 right
+	trigger             float64 // RT, 0 .. 1
+	dpadLeft, dpadRight bool
+	a, b                bool
+}
+
+// stickState remembers whether the stick is turning, for the dead zone with
+// hysteresis.
+type stickState struct{ left, right bool }
+
+// padInput turns a pad's state into ship input. Turning stays digital, like
+// the keyboard, so neither has an advantage.
+func padInput(st padState, stick *stickState) sim.Input {
+	stick.left = st.stickX < -stickOn || stick.left && st.stickX < -stickOff
+	stick.right = st.stickX > stickOn || stick.right && st.stickX > stickOff
+	return sim.Input{
+		Left:   stick.left || st.dpadLeft,
+		Right:  stick.right || st.dpadRight,
+		Thrust: st.trigger > triggerOn,
+		Fire:   st.a,
+		Bomb:   st.b,
+	}
+}
+
+func readPad(id ebiten.GamepadID) padState {
+	pressed := func(b ebiten.StandardGamepadButton) bool { return ebiten.IsStandardGamepadButtonPressed(id, b) }
+	return padState{
+		stickX:    ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickHorizontal),
+		trigger:   ebiten.StandardGamepadButtonValue(id, ebiten.StandardGamepadButtonFrontBottomRight),
+		dpadLeft:  pressed(ebiten.StandardGamepadButtonLeftLeft),
+		dpadRight: pressed(ebiten.StandardGamepadButtonLeftRight),
+		a:         pressed(ebiten.StandardGamepadButtonRightBottom),
+		b:         pressed(ebiten.StandardGamepadButtonRightRight),
+	}
+}
+
+var warnedPads = map[ebiten.GamepadID]bool{}
+
+// pads returns the connected pads with a standard layout, in a fixed order:
+// the first is player 1's, the second player 2's. Others are skipped (and
+// logged once).
+func pads() []ebiten.GamepadID {
+	var out []ebiten.GamepadID
+	for _, id := range ebiten.AppendGamepadIDs(nil) {
+		if ebiten.IsStandardGamepadLayoutAvailable(id) {
+			out = append(out, id)
+		} else if !warnedPads[id] {
+			warnedPads[id] = true
+			log.Printf("gamepad %q has no standard layout and is ignored", ebiten.GamepadName(id))
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// readInput combines the keyboard and a pad for a player: 0 or 1 in the
+// two-player modes, -1 in the one-player modes (all keys and the first pad).
+func (g *Game) readInput(player int, ids []ebiten.GamepadID) sim.Input {
+	key := ebiten.IsKeyPressed
+	var in sim.Input
+	switch player {
+	case 0:
+		in = sim.Input{Left: key(ebiten.KeyA), Right: key(ebiten.KeyD), Thrust: key(ebiten.KeyW),
+			Fire: key(ebiten.KeyShiftLeft), Bomb: key(ebiten.KeySpace)}
+	case 1:
+		in = sim.Input{Left: key(ebiten.KeyArrowLeft), Right: key(ebiten.KeyArrowRight), Thrust: key(ebiten.KeyArrowUp),
+			Fire: key(ebiten.KeyControlRight), Bomb: key(ebiten.KeyAltRight)}
+	default:
+		in = sim.Input{
+			Left:   key(ebiten.KeyArrowLeft) || key(ebiten.KeyA),
+			Right:  key(ebiten.KeyArrowRight) || key(ebiten.KeyD),
+			Thrust: key(ebiten.KeyArrowUp) || key(ebiten.KeyW) || key(ebiten.KeySpace),
+		}
+	}
+	i := max(player, 0)
+	if i >= len(ids) {
+		return in
+	}
+	p := padInput(readPad(ids[i]), &g.sticks[i])
+	return sim.Input{
+		Left: in.Left || p.Left, Right: in.Right || p.Right, Thrust: in.Thrust || p.Thrust,
+		Fire: in.Fire || p.Fire, Bomb: in.Bomb || p.Bomb,
+	}
+}
+
+// padJustPressed reports whether any pad just pressed the button.
+func padJustPressed(ids []ebiten.GamepadID, b ebiten.StandardGamepadButton) bool {
+	for _, id := range ids {
+		if inpututil.IsStandardGamepadButtonJustPressed(id, b) {
+			return true
+		}
+	}
+	return false
+}
+
+// stickSteps turns the left sticks into single steps for the menu: one step
+// each time a stick is pushed past half way.
+func (g *Game) stickSteps(ids []ebiten.GamepadID) (dx, dy int) {
+	var x, y float64
+	for _, id := range ids {
+		x += ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickHorizontal)
+		y += ebiten.StandardGamepadAxisValue(id, ebiten.StandardGamepadAxisLeftStickVertical)
+	}
+	step := func(v float64) int {
+		switch {
+		case v > menuStick:
+			return 1
+		case v < -menuStick:
+			return -1
+		}
+		return 0
+	}
+	now := [2]int{step(x), step(y)}
+	if now[0] != g.menuStick[0] {
+		dx = now[0]
+	}
+	if now[1] != g.menuStick[1] {
+		dy = now[1]
+	}
+	g.menuStick = now
+	return dx, dy
+}

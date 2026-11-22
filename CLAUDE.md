@@ -28,6 +28,8 @@ go run ./cmd/levelstat   # narrowest gap + route length per level
   race (`sim/race.go`) give each player a World sharing the Level;
   `game/twoplayer.go` draws the split screen for both. The menu
   (`game/menu.go`, `M`/`Esc`) chooses mode and level; the game starts in it.
+- Input: `game/input.go` merges the keyboard and gamepads
+  (`readInput(player)`); the pure `padInput` mapping is tested.
 - Browser build: `web/index.html` + GitHub Actions (`.github/workflows/`)
   deploys to GitHub Pages on every push to `master`.
 

@@ -4,8 +4,7 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: bombs in the duel, and weapons moved to
-  free fingers. Duel and race are not run by Claude: need play-testing.
+- Nothing in progress. Last done: gamepad support (one pad per player). Duel and race are not run by Claude: need play-testing.
 
 ## Next
 
@@ -14,7 +13,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 3. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
    `RopeLength`, `HookRange` in `sim/cargo.go`.
 4. Play-test crystals levels 30–60, especially fuel on Langvegr.
-5. Gamepad (`docs/gamepad.md`).
+5. Test the gamepads (PS4, Switch over Bluetooth): stick drift, unplugging
+   mid-flight, the menu.
 
 ## Decisions
 
@@ -30,7 +30,9 @@ Rewrite this file instead of appending. Max ~40 lines.
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
 - Duel weapons on fingers free while flying: P1 LShift fire, Space bomb;
-  P2 RCtrl fire, RAlt bomb. S/↓ shared a finger with thrust. Gamepad later.
+  P2 RCtrl fire, RAlt bomb. S/↓ shared a finger with thrust.
+- Gamepad: RT thrust, A fire, B bomb (user's choice); turning stays digital
+  so pad and keyboard are equal. First pad = player 1.
 - Bombs as a second weapon: aiming the nose while flying was too hard.
 
 ## Known problems

@@ -13,25 +13,28 @@ Keyboard keeps working exactly as before. No touch support: see README.
 
 ## Mapping
 
-| Action         | Gamepad                    |
-|----------------|----------------------------|
-| Rotate         | Left stick X, d-pad L/R    |
-| Thrust         | A, right trigger           |
-| Restart        | Start                      |
-| Next/prev level| Right/left shoulder        |
-| Zoom           | Y                          |
-| Fullscreen     | Back/Select                |
+Xbox names (PS4: A = ×, B = ○, Y = △, RT = R2, LB/RB = L1/R1). Thrust and
+weapons are on different fingers, so you can do both at once.
+
+- Turn: left stick X or d-pad left/right
+- Thrust: RT
+- Fire: A; bomb: B (duel)
+- Menu: d-pad or stick moves, A or Start plays
+- In game: Start = menu, Back = restart, LB/RB = previous/next level,
+  Y = zoom
+- Player 1 has the first pad, player 2 the second; the keyboard still works
 
 ## Tasks
 
 ### Code (do first, no hardware needed)
 
-- [ ] Move input out of `Update()` into `input.go`: `readInput() sim.Input`
-- [ ] Read pads with `AppendGamepadIDs`, `IsStandardGamepadLayoutAvailable`,
+- [x] Input in `game/input.go`: `readInput(player)`, keyboard OR pad
+- [x] Read pads with `AppendGamepadIDs`, `IsStandardGamepadLayoutAvailable`,
       `IsStandardGamepadButtonPressed`, `StandardGamepadAxisValue`
-- [ ] Dead zone with hysteresis (on at ~0.3, off at ~0.2), as constants
-- [ ] Pure mapping function (buttons + axes -> `sim.Input`) with tests:
-      dead zone, d-pad vs stick, both at once
+- [x] Dead zone with hysteresis (on at 0.3, off at 0.2), as constants
+- [x] Pure mapping function `padInput` with tests: dead zone, hysteresis,
+      d-pad, trigger, fire/bomb
+- [x] One pad per player in duel and race; menu with d-pad or stick
 - [ ] Hot-plug: pad disconnected mid-flight gives no input, no crash
 - [ ] HUD help text follows the last used device (keyboard or pad)
 

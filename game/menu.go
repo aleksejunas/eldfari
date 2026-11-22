@@ -75,17 +75,22 @@ func (g *Game) updateMenu() {
 		}
 		return false
 	}
+	// Pads: d-pad or left stick moves, A or Start plays.
+	ids := pads()
+	pad := func(b ebiten.StandardGamepadButton) bool { return padJustPressed(ids, b) }
+	dx, dy := g.stickSteps(ids)
 	counts := g.levelCounts()
 	switch {
-	case pressed(ebiten.KeyArrowLeft, ebiten.KeyA):
+	case pressed(ebiten.KeyArrowLeft, ebiten.KeyA) || pad(ebiten.StandardGamepadButtonLeftLeft) || dx < 0:
 		g.menu.move(-1, 0, counts)
-	case pressed(ebiten.KeyArrowRight, ebiten.KeyD):
+	case pressed(ebiten.KeyArrowRight, ebiten.KeyD) || pad(ebiten.StandardGamepadButtonLeftRight) || dx > 0:
 		g.menu.move(1, 0, counts)
-	case pressed(ebiten.KeyArrowUp, ebiten.KeyW):
+	case pressed(ebiten.KeyArrowUp, ebiten.KeyW) || pad(ebiten.StandardGamepadButtonLeftTop) || dy < 0:
 		g.menu.move(0, -1, counts)
-	case pressed(ebiten.KeyArrowDown, ebiten.KeyS):
+	case pressed(ebiten.KeyArrowDown, ebiten.KeyS) || pad(ebiten.StandardGamepadButtonLeftBottom) || dy > 0:
 		g.menu.move(0, 1, counts)
-	case pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace):
+	case pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace) ||
+		pad(ebiten.StandardGamepadButtonRightBottom) || pad(ebiten.StandardGamepadButtonCenterRight):
 		g.mode, g.lvl = g.menu.selected()
 		g.setLevel(g.lvl)
 		g.inMenu = false

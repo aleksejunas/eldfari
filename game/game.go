@@ -62,6 +62,9 @@ type Game struct {
 
 	inMenu bool // the mode and level chooser is shown instead of the game
 	menu   menu
+
+	sticks    [2]stickState // per player, for the stick's dead zone
+	menuStick [2]int        // stick direction last step, for menu steps
 }
 
 func newGame() *Game {
@@ -159,36 +162,35 @@ func (g *Game) Update() error {
 		g.updateMenu()
 		return nil
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyM) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+	ids := pads()
+	// Pads: Start = menu, Back = restart, LB/RB = previous/next level, Y = zoom.
+	padKey := func(b ebiten.StandardGamepadButton) bool { return padJustPressed(ids, b) }
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+		padKey(ebiten.StandardGamepadButtonCenterRight) {
 		g.openMenu()
 		return nil
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) || padKey(ebiten.StandardGamepadButtonCenterLeft) {
 		g.reset()
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyN) || padKey(ebiten.StandardGamepadButtonFrontTopRight) {
 		g.setLevel(g.lvl + 1)
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) || padKey(ebiten.StandardGamepadButtonFrontTopLeft) {
 		g.setLevel(g.lvl - 1)
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyZ) || padKey(ebiten.StandardGamepadButtonRightTop) {
 		g.zoomIdx = (g.zoomIdx + 1) % len(zoomSteps)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		g.showFPS = !g.showFPS
 	}
 	if g.players() != nil {
-		g.updateTwoPlayer()
+		g.updateTwoPlayer(ids)
 		return nil
 	}
 
-	in := sim.Input{
-		Left:   ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA),
-		Right:  ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD),
-		Thrust: ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeySpace),
-	}
-	g.world.Step(in)
+	g.world.Step(g.readInput(-1, ids))
 
 	if g.world.Won && !g.wasWon {
 		g.best.record(g.bestKey(), g.world.Time)

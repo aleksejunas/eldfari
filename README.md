@@ -41,6 +41,9 @@ Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
 `F` = fullscreen, `I` = FPS and
 slowest frame (to spot hitches).
 
+Gamepads (PS4, Switch, Xbox): left stick or d-pad turns, RT/R2 thrust, A/×
+fire, B/○ bomb, Start menu. The first pad is player 1, the second player 2.
+
 If some keys do nothing, the browser is probably catching them: Vivaldi's
 single-key shortcuts or a Vim-style extension (Vimium etc.). Turn those off
 for the site, or use another browser. In the browser, best times are saved
