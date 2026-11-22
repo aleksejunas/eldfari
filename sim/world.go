@@ -31,7 +31,7 @@ const (
 	CrystalRadius = 18.0 // a crystal is taken when the ship's centre is closer than this
 )
 
-type Input struct{ Left, Right, Thrust, Fire bool }
+type Input struct{ Left, Right, Thrust, Fire, Bomb bool }
 
 type State int
 

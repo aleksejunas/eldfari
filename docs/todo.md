@@ -121,6 +121,8 @@ Duel mode first (playable), then a race mode.
 - [x] Shooting and projectiles
 - [x] Hits, damage (4 hits), death and respawn at base; first to 5 wins
 - [x] Repair and refuel while landed on the own base
+- [x] Bombs: drop with the ship's speed, fall, blast radius 45 px, two
+      hits destroy; weapons on fingers that are free while flying
 - [ ] Play-test the duel; tune `sim/duel.go` (bullet speed, damage, reload)
 - [x] Race mode: both race for the same crystals (one taken is gone for
       both); when all are taken and both have landed, most crystals wins.

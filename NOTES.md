@@ -4,8 +4,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: race mode (two players, shared crystals,
-  most wins). Duel and race are not run by Claude: need play-testing.
+- Nothing in progress. Last done: bombs in the duel, and weapons moved to
+  free fingers. Duel and race are not run by Claude: need play-testing.
 
 ## Next
 
@@ -29,6 +29,9 @@ Rewrite this file instead of appending. Max ~40 lines.
 - Duel and race: each player a World sharing the Level, `sim.Player` shared
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
+- Duel weapons on fingers free while flying: P1 LShift fire, Space bomb;
+  P2 RCtrl fire, RAlt bomb. S/↓ shared a finger with thrust. Gamepad later.
+- Bombs as a second weapon: aiming the nose while flying was too hard.
 
 ## Known problems
 

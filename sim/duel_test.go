@@ -156,3 +156,51 @@ func run3(d *Duel, frames int) {
 		d.Step([2]Input{})
 	}
 }
+
+func TestBombFallsAndExplodesOnTheFloor(t *testing.T) {
+	d := duelArena()
+	fly(d.Players[0].World, 300, 300, 50, 0, 0)
+	d.Step([2]Input{{Bomb: true}, {}})
+	if len(d.Bombs) != 1 {
+		t.Fatalf("%d bombs, want one", len(d.Bombs))
+	}
+	if b := d.Bombs[0]; b.VX < 40 || b.VY <= 0 {
+		t.Errorf("bomb velocity (%.0f,%.0f): it should keep the ship's speed and fall", b.VX, b.VY)
+	}
+	d.Step([2]Input{{Bomb: true}, {}})
+	if len(d.Bombs) != 1 {
+		t.Error("the bomb bay should reload before the next bomb")
+	}
+	run3(d, 120) // 2 s: long enough to fall 200 px
+	if len(d.Bombs) != 0 || len(d.Blasts) == 0 && d.Players[0].Alive() {
+		t.Errorf("%d bombs left, %d blasts: the bomb should have exploded on the floor", len(d.Bombs), len(d.Blasts))
+	}
+}
+
+func TestBombBlastHurtsTheOtherShipNearby(t *testing.T) {
+	d := duelArena()
+	target(d)                                             // player 1 hovers at (500,300)
+	d.Bombs = []Bomb{{X: 500, Y: 270, VY: 150, Owner: 0}} // faster than the falling target
+	run3(d, 30)
+	if want := 1 - BombDamage; d.Players[1].Health > want+1e-9 {
+		t.Errorf("health %.2f, want at most %.2f after a bomb hit", d.Players[1].Health, want)
+	}
+
+	far := duelArena()
+	far.Bombs = []Bomb{{X: 500, Y: 400, Owner: 0}} // explodes on the floor, far from both bases
+	run3(far, 60)
+	if far.Players[1].Health != 1 || far.Players[0].Health != 1 {
+		t.Error("a blast far away must not hurt anyone")
+	}
+}
+
+func TestOwnBombDoesntHurt(t *testing.T) {
+	d := duelArena()
+	fly(d.Players[0].World, 500, 300, 0, 0, 0)
+	d.Bombs = []Bomb{{X: 500, Y: 320, Owner: 0}}
+	d.Players[0].Ship.Fuel = 0
+	run3(d, 5)
+	if d.Players[0].Health != 1 {
+		t.Errorf("health %.2f: your own bomb must not hurt you", d.Players[0].Health)
+	}
+}

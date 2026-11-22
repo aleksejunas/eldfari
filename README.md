@@ -26,9 +26,12 @@ rope by itself, and lower it gently onto the marked pad. The cargo swings,
 so move smoothly.
 
 Duel mode: two players on one keyboard, split screen. Player 1 flies with
-`A`/`D`/`W` and fires with `S`, player 2 with the arrow keys and fires with
-down. Dying gives the other a point; first to 5 wins. Land on your own base
-to refuel and repair.
+`A`/`D`/`W`, fires with left `Shift` and drops bombs with `Space`; player 2
+uses the arrow keys, fires with right `Ctrl` and drops bombs with right `Alt`.
+So you can thrust, turn and shoot at once. Bombs keep the ship's speed,
+fall, and explode near the other ship or on the terrain. Dying gives the
+other a point; first to 5 wins. Land on your own base to refuel and
+repair.
 
 Race mode: two players, the same keys without firing, race for the same
 crystals. When all are taken and both have landed, most crystals wins.

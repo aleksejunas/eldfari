@@ -272,6 +272,23 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 		for _, b := range g.duel.Bullets {
 			ln(b.X, b.Y, b.X-b.VX*0.02, b.Y-b.VY*0.02, 2, playerCol[b.Owner])
 		}
+		// Bombs: a small diamond. Blasts: a ring that grows and fades.
+		for _, b := range g.duel.Bombs {
+			c := playerCol[b.Owner]
+			ln(b.X, b.Y-5, b.X+4, b.Y, 2, c)
+			ln(b.X+4, b.Y, b.X, b.Y+5, 2, c)
+			ln(b.X, b.Y+5, b.X-4, b.Y, 2, c)
+			ln(b.X-4, b.Y, b.X, b.Y-5, 2, c)
+		}
+		for _, b := range g.duel.Blasts {
+			k := b.Age / sim.BlastTime
+			r, c := sim.BlastRadius*(0.4+0.6*k), fade(colPad, 1-k)
+			const n = 16
+			for j := range n {
+				a0, a1 := float64(j)*2*math.Pi/n, float64(j+1)*2*math.Pi/n
+				ln(b.X+r*math.Cos(a0), b.Y+r*math.Sin(a0), b.X+r*math.Cos(a1), b.Y+r*math.Sin(a1), 3, c)
+			}
+		}
 	}
 
 	// Arrows on a ring around the ship towards targets that are off screen:

@@ -12,7 +12,9 @@ import (
 
 // Two-player modes (duel and race) in the game: two players on one keyboard,
 // split screen. Player 1 (left) flies with A/D/W, player 2 (right) with the
-// arrow keys. In a duel, S and arrow down fire.
+// arrow keys. In a duel the weapons are on fingers that are free while
+// flying: player 1 fires with left Shift (little finger) and bombs with Space
+// (thumb), player 2 fires with right Ctrl and bombs with right Alt (thumb).
 
 var (
 	colP2     = color.RGBA{0x8a, 0xc6, 0xd0, 0xff}
@@ -54,8 +56,10 @@ func (g *Game) resetTwoPlayer() {
 func (g *Game) updateTwoPlayer() {
 	key := ebiten.IsKeyPressed
 	in := [2]sim.Input{
-		{Left: key(ebiten.KeyA), Right: key(ebiten.KeyD), Thrust: key(ebiten.KeyW), Fire: key(ebiten.KeyS)},
-		{Left: key(ebiten.KeyArrowLeft), Right: key(ebiten.KeyArrowRight), Thrust: key(ebiten.KeyArrowUp), Fire: key(ebiten.KeyArrowDown)},
+		{Left: key(ebiten.KeyA), Right: key(ebiten.KeyD), Thrust: key(ebiten.KeyW),
+			Fire: key(ebiten.KeyShiftLeft), Bomb: key(ebiten.KeySpace)},
+		{Left: key(ebiten.KeyArrowLeft), Right: key(ebiten.KeyArrowRight), Thrust: key(ebiten.KeyArrowUp),
+			Fire: key(ebiten.KeyControlRight), Bomb: key(ebiten.KeyAltRight)},
 	}
 	if g.duel != nil {
 		g.duel.Step(in)
@@ -134,7 +138,7 @@ func (g *Game) drawPlayerHUD(dst *ebiten.Image, i int) {
 
 	keys := [2]string{"A/D turn  ·  W thrust", "← → turn  ·  ↑ thrust"}
 	if g.duel != nil {
-		keys = [2]string{"A/D turn  ·  W thrust  ·  S fire", "← → turn  ·  ↑ thrust  ·  ↓ fire"}
+		keys = [2]string{"A/D turn  ·  W thrust  ·  Shift fire  ·  Space bomb", "← → turn  ·  ↑ thrust  ·  Ctrl fire  ·  Alt bomb"}
 	}
 	if i == 0 {
 		g.print(dst, keys[0], margin, H-margin-sizeSmall, small, text.AlignStart, colDim)

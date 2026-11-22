@@ -16,13 +16,24 @@ const (
 	ShipHitRadius = 11.0 // px from the ship's centre
 	RespawnTime   = 2.0  // s from death to spawning at the base
 	RepairRate    = 0.5  // health per second while landed on the own base
+
+	// Bombs drop from the ship with its velocity and fall with gravity, so
+	// you can attack from above without aiming the nose. They explode on the
+	// terrain or near the other ship and hurt every ship but your own within
+	// BlastRadius.
+	BombReload  = 1.0  // s between bombs
+	BombDamage  = 0.5  // of full health: two bombs destroy a ship
+	BlastRadius = 45.0 // px
+	BlastTime   = 0.4  // s a blast stays visible
 )
 
 type Duel struct {
 	Level   *Level
 	Players [2]Player
 	Bullets []Bullet
-	Winner  int // -1 until a player reaches DuelScore
+	Bombs   []Bomb
+	Blasts  []Blast // recent explosions, for drawing
+	Winner  int     // -1 until a player reaches DuelScore
 }
 
 type Player struct {
@@ -32,6 +43,18 @@ type Player struct {
 	Health  float64 // 0..1
 	Respawn float64 // seconds until the ship spawns again; 0 while alive
 	reload  float64
+	bombIn  float64 // seconds until the next bomb
+}
+
+type Bomb struct {
+	X, Y, VX, VY float64
+	Owner        int
+}
+
+// Blast is an explosion that has just happened, for drawing.
+type Blast struct {
+	X, Y float64
+	Age  float64 // seconds since it went off
 }
 
 type Bullet struct {
@@ -56,7 +79,7 @@ func (d *Duel) Reset() {
 		p.Score = 0
 		p.spawn()
 	}
-	d.Bullets = nil
+	d.Bullets, d.Bombs, d.Blasts = nil, nil, nil
 	d.Winner = -1
 }
 
@@ -64,7 +87,7 @@ func (p *Player) spawn() {
 	pad := p.Level.Pads[p.Base]
 	p.Reset()
 	p.Ship.X, p.Ship.Y = (pad.X0+pad.X1)/2, pad.Y-ShipRear-0.5
-	p.Health, p.Respawn, p.reload = 1, 0, 0
+	p.Health, p.Respawn, p.reload, p.bombIn = 1, 0, 0, 0
 }
 
 // Alive reports whether the player's ship is in the game (not waiting to
@@ -93,11 +116,16 @@ func (d *Duel) Step(in [2]Input) {
 		if in[i].Fire && p.reload <= 0 && p.Ship.State == Flying {
 			d.fire(i)
 		}
+		p.bombIn -= Dt
+		if in[i].Bomb && p.bombIn <= 0 && p.Ship.State == Flying {
+			d.dropBomb(i)
+		}
 		if pad := p.Level.Pads[p.Base]; p.Ship.State == Landed && p.Ship.X >= pad.X0 && p.Ship.X <= pad.X1 {
 			p.Health = min(1, p.Health+RepairRate*Dt)
 		}
 	}
 	d.moveBullets()
+	d.moveBombs()
 }
 
 func (d *Duel) fire(i int) {
@@ -135,15 +163,77 @@ func (d *Duel) moveBullet(b *Bullet) bool {
 		}
 		other := &d.Players[1-b.Owner]
 		if other.Alive() && math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= ShipHitRadius {
-			if other.Health -= BulletDamage; other.Health <= 1e-9 {
-				other.Ship.State = Crashed
-				d.died(1 - b.Owner)
-			}
+			d.damage(1-b.Owner, BulletDamage)
 			return false
 		}
 	}
 	b.Life -= Dt
 	return b.Life > 0
+}
+
+// damage takes health from player i and destroys the ship at zero.
+func (d *Duel) damage(i int, amount float64) {
+	p := &d.Players[i]
+	if !p.Alive() {
+		return
+	}
+	if p.Health -= amount; p.Health <= 1e-9 {
+		p.Ship.State = Crashed
+		d.died(i)
+	}
+}
+
+func (d *Duel) dropBomb(i int) {
+	s := &d.Players[i].Ship
+	rear := s.ToWorld(0, ShipRear+4)
+	d.Bombs = append(d.Bombs, Bomb{X: rear.X, Y: rear.Y, VX: s.VX, VY: s.VY, Owner: i})
+	d.Players[i].bombIn = BombReload
+}
+
+// moveBombs lets the bombs fall in substeps and sets them off on the terrain
+// or near the other ship. Old blasts fade out.
+func (d *Duel) moveBombs() {
+	blasts := d.Blasts[:0]
+	for _, b := range d.Blasts {
+		if b.Age += Dt; b.Age < BlastTime {
+			blasts = append(blasts, b)
+		}
+	}
+	d.Blasts = blasts
+
+	falling := d.Bombs[:0]
+	for _, b := range d.Bombs {
+		if d.moveBomb(&b) {
+			falling = append(falling, b)
+		}
+	}
+	d.Bombs = falling
+}
+
+// moveBomb reports whether the bomb is still falling.
+func (d *Duel) moveBomb(b *Bomb) bool {
+	h := Dt / Substeps
+	other := &d.Players[1-b.Owner]
+	for range Substeps {
+		b.VY += Gravity * h
+		b.X += b.VX * h
+		b.Y += b.VY * h
+		near := other.Alive() && math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= ShipHitRadius
+		if near || d.Level.Solid(b.X, b.Y) {
+			d.explode(b)
+			return false
+		}
+	}
+	return b.Y < float64(d.Level.H) // gone below the world
+}
+
+// explode damages every ship but the bomb owner's within BlastRadius.
+func (d *Duel) explode(b *Bomb) {
+	d.Blasts = append(d.Blasts, Blast{X: b.X, Y: b.Y})
+	other := &d.Players[1-b.Owner]
+	if math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= BlastRadius {
+		d.damage(1-b.Owner, BombDamage)
+	}
 }
 
 // died gives the other player a point and starts the respawn timer.
