@@ -31,6 +31,22 @@ const (
 	minPadButtons = 6
 )
 
+// extraMappings fixes controllers that Ebitengine's database maps wrong
+// (SDL gamecontrollerdb format). Only buttons measured on the real controller
+// are listed; the rest are left unmapped rather than guessed.
+//
+// PDP Afterglow Wireless Deluxe (Switch) over Bluetooth ("Lic Pro
+// Controller"): without this, ZR/ZL read as RB/LB and + as RT, so + gave
+// thrust and ZR did nothing. Over the USB cable it sends no input at all.
+const extraMappings = "050000006f0e00008601000001000000,Lic Pro Controller," +
+	"a:b0,b:b1,lefttrigger:b6,righttrigger:b7,start:b9,dpleft:b19,dpright:b17,leftx:a0,lefty:a1,platform:Linux,\n"
+
+func init() {
+	if _, err := ebiten.UpdateStandardGamepadLayoutMappings(extraMappings); err != nil {
+		log.Printf("gamepad mappings: %v", err)
+	}
+}
+
 // padState is what one pad does right now.
 type padState struct {
 	stickX float64 // left stick, -1 left .. 1 right
