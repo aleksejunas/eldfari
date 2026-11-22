@@ -4,7 +4,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: gamepad support (one pad per player). Duel and race are not run by Claude: need play-testing.
+- Nothing in progress. Last done: gamepad support (one pad per player).
+  Duel, race and pads are not run by Claude: need play-testing.
 
 ## Next
 
