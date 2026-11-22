@@ -19,6 +19,7 @@ const (
 	ModeCrystals Mode = iota // collect all crystals, land on the start pad
 	ModeCargo                // deliver the cargo to the goal pad
 	ModeDuel                 // two players shoot each other (see Duel)
+	ModeRace                 // two players race for the crystals (see Race)
 )
 
 // Level holds the terrain as polygons (drawn as outlines) and an invisible

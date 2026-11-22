@@ -129,7 +129,7 @@ func levelNumber(name string) (int, bool) {
 func ParseLevel(data []byte, mode Mode) (*Level, error) {
 	var l *Level
 	switch mode {
-	case ModeCrystals:
+	case ModeCrystals, ModeRace: // race: pads[0] and pads[1] are the players' starts
 		var f crystalsFile
 		if err := decodeStrict(data, &f); err != nil {
 			return nil, err
@@ -325,20 +325,29 @@ func (l *Level) Validate() error {
 	case ModeCargo:
 		l.validateCargo(addf, inWorld)
 	case ModeDuel:
-		if len(l.Pads) < 2 {
-			addf("a duel level needs two pads: pads[0] and pads[1] are the players' bases")
-		} else {
-			spawn := Ship{X: (l.Pads[1].X0 + l.Pads[1].X1) / 2, Y: l.Pads[1].Y - ShipRear - 0.5}
-			for _, p := range spawn.contactPoints() {
-				if l.Solid(p.X, p.Y) {
-					addf("player 2 spawns inside the terrain (contact point %.0f,%.0f)", p.X, p.Y)
-					break
-				}
-			}
-		}
+		l.validateSecondBase(addf)
+	case ModeRace:
+		l.validateSecondBase(addf)
+		l.validateCrystals(addf, inWorld)
 	}
 
 	return errors.Join(errs...)
+}
+
+// validateSecondBase checks the two-player modes: pads[1] is player 2's base,
+// and the ship must fit there.
+func (l *Level) validateSecondBase(addf func(string, ...any)) {
+	if len(l.Pads) < 2 {
+		addf("a two-player level needs two pads: pads[0] and pads[1] are the players' bases")
+		return
+	}
+	spawn := Ship{X: (l.Pads[1].X0 + l.Pads[1].X1) / 2, Y: l.Pads[1].Y - ShipRear - 0.5}
+	for _, p := range spawn.contactPoints() {
+		if l.Solid(p.X, p.Y) {
+			addf("player 2 spawns inside the terrain (contact point %.0f,%.0f)", p.X, p.Y)
+			return
+		}
+	}
 }
 
 func (l *Level) validateCrystals(addf func(string, ...any), inWorld func(x, y float64) bool) {

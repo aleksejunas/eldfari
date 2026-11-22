@@ -12,7 +12,7 @@ import (
 	"io/fs"
 )
 
-//go:embed crystals/*.json cargo/*.json duel/*.json
+//go:embed crystals/*.json cargo/*.json duel/*.json race/*.json
 var files embed.FS
 
 // Crystals and Cargo hold the levels for each game mode.
@@ -20,6 +20,7 @@ var (
 	Crystals = sub("crystals")
 	Cargo    = sub("cargo")
 	Duel     = sub("duel")
+	Race     = sub("race")
 )
 
 func sub(dir string) fs.FS {
