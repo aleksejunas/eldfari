@@ -69,6 +69,18 @@ func TestMostCrystalsWinsWhenAllTakenAndLanded(t *testing.T) {
 	}
 }
 
+func TestRaceNearestCrystalSkipsTaken(t *testing.T) {
+	r := raceArena()
+	fly(r.Players[1].World, 520, 300, 0, 0, 0)
+	if c, ok := r.NearestCrystal(1); !ok || c != r.Level.Crystals[1] {
+		t.Fatalf("nearest = %v %v, want %v", c, ok, r.Level.Crystals[1])
+	}
+	r.Taken[1] = 0
+	if c, _ := r.NearestCrystal(1); c != r.Level.Crystals[2] {
+		t.Errorf("nearest = %v, want %v once the middle one is taken", c, r.Level.Crystals[2])
+	}
+}
+
 func TestEqualCrystalsIsADraw(t *testing.T) {
 	r := raceArena()
 	r.Level.Crystals = r.Level.Crystals[:2]

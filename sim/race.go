@@ -50,6 +50,20 @@ func (r *Race) Left() int {
 	return n
 }
 
+// NearestCrystal returns the crystal nobody has taken that is nearest to
+// player i, or false if all are taken.
+func (r *Race) NearestCrystal(i int) (Pt, bool) {
+	s := &r.Players[i].Ship
+	var best Pt
+	bestD, found := math.Inf(1), false
+	for c, pos := range r.Level.Crystals {
+		if d := math.Hypot(pos.X-s.X, pos.Y-s.Y); r.Taken[c] < 0 && d < bestD {
+			best, bestD, found = pos, d, true
+		}
+	}
+	return best, found
+}
+
 // Step advances the race by one fixed time step (Dt).
 func (r *Race) Step(in [2]Input) {
 	if r.Winner >= 0 {

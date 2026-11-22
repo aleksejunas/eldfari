@@ -30,6 +30,9 @@ Duel mode: two players on one keyboard, split screen. Player 1 flies with
 down. Dying gives the other a point; first to 5 wins. Land on your own base
 to refuel and repair.
 
+Race mode: two players, the same keys without firing, race for the same
+crystals. When all are taken and both have landed, most crystals wins.
+
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
 `N`/`P` = next/previous level, `M`/`Esc` = menu (mode and level), `Z` = zoom,
 `F` = fullscreen, `I` = FPS and

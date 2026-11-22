@@ -34,7 +34,7 @@ var (
 )
 
 // modeNames are the folders in levels/, also used in best-time keys and the HUD.
-var modeNames = map[sim.Mode]string{sim.ModeCrystals: "crystals", sim.ModeCargo: "cargo", sim.ModeDuel: "duel"}
+var modeNames = map[sim.Mode]string{sim.ModeCrystals: "crystals", sim.ModeCargo: "cargo", sim.ModeDuel: "duel", sim.ModeRace: "race"}
 
 type Game struct {
 	levels map[sim.Mode][]*sim.Level
@@ -43,7 +43,8 @@ type Game struct {
 	best   *bestTimes
 
 	world      *sim.World // in a duel: player 1's
-	duel       *sim.Duel  // nil outside duel mode; see duel.go
+	duel       *sim.Duel  // nil outside duel mode; see twoplayer.go
+	race       *sim.Race  // nil outside race mode
 	views      [2]duelView
 	parts      []particle
 	camX, camY float64 // top-left corner of the view, in world coordinates
@@ -76,8 +77,12 @@ func newGame() *Game {
 	if err != nil {
 		log.Fatalf("duel level files:\n%v", err)
 	}
+	race, err := sim.LoadDir(levels.Race, sim.ModeRace)
+	if err != nil {
+		log.Fatalf("race level files:\n%v", err)
+	}
 	g := &Game{
-		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo, sim.ModeDuel: duel},
+		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo, sim.ModeDuel: duel, sim.ModeRace: race},
 		best:    loadBestTimes(),
 		w:       startW,
 		h:       startH,
@@ -96,11 +101,15 @@ func (g *Game) setLevel(i int) {
 	ls := g.levels[g.mode]
 	n := len(ls)
 	g.lvl = ((i % n) + n) % n
-	g.duel = nil
-	if g.mode == sim.ModeDuel {
+	g.duel, g.race = nil, nil
+	switch g.mode {
+	case sim.ModeDuel:
 		g.duel = sim.NewDuel(ls[g.lvl])
 		g.world = g.duel.Players[0].World
-	} else {
+	case sim.ModeRace:
+		g.race = sim.NewRace(ls[g.lvl])
+		g.world = g.race.Players[0].World
+	default:
 		g.world = sim.NewWorld(ls[g.lvl])
 	}
 	g.reset()
@@ -114,8 +123,8 @@ func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
 
 func (g *Game) reset() {
 	g.parts = nil
-	if g.duel != nil {
-		g.resetDuel()
+	if g.players() != nil {
+		g.resetTwoPlayer()
 		return
 	}
 	g.world.Reset()
@@ -169,8 +178,8 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		g.showFPS = !g.showFPS
 	}
-	if g.duel != nil {
-		g.updateDuel()
+	if g.players() != nil {
+		g.updateTwoPlayer()
 		return nil
 	}
 
@@ -201,8 +210,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawMenu(screen)
 		return
 	}
-	if g.duel != nil {
-		g.drawDuel(screen)
+	if g.players() != nil {
+		g.drawTwoPlayer(screen)
 		return
 	}
 	screen.Fill(colBG)
@@ -235,7 +244,7 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 
 	// Crystals: a diamond that pulses and "spins" by changing its width.
 	for i, c := range l.Crystals {
-		if g.world.Got[i] {
+		if g.world.Got[i] || g.race != nil && g.race.Taken[i] >= 0 {
 			continue
 		}
 		t := float64(g.tick)
@@ -252,24 +261,26 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 		g.drawCargo(ln)
 	}
 
-	if g.duel != nil {
-		for i := range g.duel.Players {
-			drawShip(ln, &g.duel.Players[i].Ship, playerCol[i])
-		}
-		for _, b := range g.duel.Bullets {
-			ln(b.X, b.Y, b.X-b.VX*0.02, b.Y-b.VY*0.02, 2, playerCol[b.Owner])
+	if ps := g.players(); ps != nil {
+		for i := range ps {
+			drawShip(ln, &ps[i].Ship, playerCol[i])
 		}
 	} else {
 		drawShip(ln, &g.world.Ship, colShip)
 	}
+	if g.duel != nil {
+		for _, b := range g.duel.Bullets {
+			ln(b.X, b.Y, b.X-b.VX*0.02, b.Y-b.VY*0.02, 2, playerCol[b.Owner])
+		}
+	}
 
 	// Arrows on a ring around the ship towards targets that are off screen:
 	// the nearest crystal or the cargo, and the pad to head for. In a duel:
-	// the other player.
+	// the other player. In a race: the nearest crystal left, then a pad.
 	vw, vh := float64(dst.Bounds().Dx())/z, float64(dst.Bounds().Dy())/z
 	s := &g.world.Ship
 	if me >= 0 {
-		s = &g.duel.Players[me].Ship
+		s = &g.players()[me].Ship
 	}
 	arrow := func(tx, ty float64, c color.RGBA) {
 		if tx > camX && tx < camX+vw && ty > camY && ty < camY+vh {
@@ -286,9 +297,19 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 		ln(rx, ry, tipX, tipY, 2, c)
 	}
 	switch {
-	case me >= 0:
+	case g.duel != nil:
 		if other := &g.duel.Players[1-me]; s.State != sim.Crashed && other.Alive() {
 			arrow(other.Ship.X, other.Ship.Y, playerCol[1-me])
+		}
+	case g.race != nil:
+		if s.State == sim.Crashed || g.race.Winner >= 0 {
+			break
+		}
+		if c, ok := g.race.NearestCrystal(me); ok {
+			arrow(c.X, c.Y, colGem)
+		} else {
+			pad := g.race.Players[me].GoalPad() // the nearest pad: time to land
+			arrow((pad.X0+pad.X1)/2, pad.Y, colPad)
 		}
 	case s.State != sim.Crashed && !g.world.Won:
 		if c, ok := g.world.NearestCrystal(); ok {

@@ -4,13 +4,13 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: duel mode (two players, split screen,
-  shooting, first to 5). Not run by Claude: needs play-testing.
+- Nothing in progress. Last done: race mode (two players, shared crystals,
+  most wins). Duel and race are not run by Claude: need play-testing.
 
 ## Next
 
 1. Play-test the duel; tune bullet speed, damage, reload in `sim/duel.go`.
-2. Race mode: its own mode and levels, both players fly the same course.
+2. Play-test the race (Kappreið, Gullhellir).
 3. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
    `RopeLength`, `HookRange` in `sim/cargo.go`.
 4. Play-test crystals levels 30–60, especially fuel on Langvegr.
@@ -26,8 +26,9 @@ Rewrite this file instead of appending. Max ~40 lines.
 - An autopilot test flies every cargo level, so each level is proven doable.
 - Old Norse level names; losing best times on a rename is fine.
 - Commit and push after each green step without asking.
-- Duel: each player a World sharing the Level (no interface yet); dying by
-  bullet or crash gives the other a point.
+- Duel and race: each player a World sharing the Level, `sim.Player` shared
+  (no interface yet). Duel: dying gives the other a point. Race: crystals
+  are shared, odd count per level so it can't end in a draw.
 
 ## Known problems
 

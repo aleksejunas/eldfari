@@ -122,8 +122,10 @@ Duel mode first (playable), then a race mode.
 - [x] Hits, damage (4 hits), death and respawn at base; first to 5 wins
 - [x] Repair and refuel while landed on the own base
 - [ ] Play-test the duel; tune `sim/duel.go` (bullet speed, damage, reload)
-- [ ] Race mode: its own game mode and levels, both players fly the same
-      course (e.g. crystals or checkpoints), fastest wins
+- [x] Race mode: both race for the same crystals (one taken is gone for
+      both); when all are taken and both have landed, most crystals wins.
+      Levels Kappreið and Gullhellir (symmetric, odd crystal count)
+- [ ] Play-test the race
 - [ ] Base station: choose weapons and fuel
 - [ ] Mass = ship + fuel + ammo (the trade-off between load and speed)
 - [ ] Liquid (drag per pixel) and more levels
