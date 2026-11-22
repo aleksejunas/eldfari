@@ -159,6 +159,15 @@ func ParseLevel(data []byte, mode Mode) (*Level, error) {
 			}
 		}
 		l.goalName = f.Goal
+	case ModeDuel:
+		var f baseFile // pads[0] and pads[1] are the players' bases
+		if err := decodeStrict(data, &f); err != nil {
+			return nil, err
+		}
+		var err error
+		if l, err = f.level(); err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unknown mode %d", mode)
 	}
@@ -315,6 +324,18 @@ func (l *Level) Validate() error {
 		l.validateCrystals(addf, inWorld)
 	case ModeCargo:
 		l.validateCargo(addf, inWorld)
+	case ModeDuel:
+		if len(l.Pads) < 2 {
+			addf("a duel level needs two pads: pads[0] and pads[1] are the players' bases")
+		} else {
+			spawn := Ship{X: (l.Pads[1].X0 + l.Pads[1].X1) / 2, Y: l.Pads[1].Y - ShipRear - 0.5}
+			for _, p := range spawn.contactPoints() {
+				if l.Solid(p.X, p.Y) {
+					addf("player 2 spawns inside the terrain (contact point %.0f,%.0f)", p.X, p.Y)
+					break
+				}
+			}
+		}
 	}
 
 	return errors.Join(errs...)
