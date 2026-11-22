@@ -4,16 +4,17 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: `cmd/levelstat` measures cargo levels
-  (gap only on the leg with the cargo; the empty leg is the easy part).
+- Nothing in progress. Last done: duel mode (two players, split screen,
+  shooting, first to 5). Not run by Claude: needs play-testing.
 
 ## Next
 
-1. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
+1. Play-test the duel; tune bullet speed, damage, reload in `sim/duel.go`.
+2. Race mode: its own mode and levels, both players fly the same course.
+3. Play-test the cargo levels: difficulty order, and tune `CargoMass`,
    `RopeLength`, `HookRange` in `sim/cargo.go`.
-2. Play-test crystals levels 30–60, especially fuel on Langvegr.
-3. Gamepad (`docs/gamepad.md`).
-4. Two players in split screen.
+4. Play-test crystals levels 30–60, especially fuel on Langvegr.
+5. Gamepad (`docs/gamepad.md`).
 
 ## Decisions
 
@@ -25,6 +26,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 - An autopilot test flies every cargo level, so each level is proven doable.
 - Old Norse level names; losing best times on a rename is fine.
 - Commit and push after each green step without asking.
+- Duel: each player a World sharing the Level (no interface yet); dying by
+  bullet or crash gives the other a point.
 
 ## Known problems
 

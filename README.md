@@ -25,6 +25,11 @@ Cargo mode: fly inside the dashed ring around the cargo, it hooks on to a
 rope by itself, and lower it gently onto the marked pad. The cargo swings,
 so move smoothly.
 
+Duel mode: two players on one keyboard, split screen. Player 1 flies with
+`A`/`D`/`W` and fires with `S`, player 2 with the arrow keys and fires with
+down. Dying gives the other a point; first to 5 wins. Land on your own base
+to refuel and repair.
+
 Keys: `A`/`D` or arrows = rotate, `W`/up/space = thrust, `R` = restart,
 `N`/`P` = next/previous level, `M`/`Esc` = menu (mode and level), `Z` = zoom,
 `F` = fullscreen, `I` = FPS and

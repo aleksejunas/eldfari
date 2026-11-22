@@ -110,13 +110,21 @@ Full plan: [gamepad.md](gamepad.md)
 
 ## 8. Two players (what Turboraketti really was)
 
-- [ ] `levels/twoplayer/` with its own loader and fields (a base per player)
-- [ ] Two ships in World, two input sets (WASD + arrows, or one gamepad
-      each: `readInput(player)` from gamepad.md)
-- [ ] Split screen: two cameras rendering to separate offscreen Images
-- [ ] Shooting and projectiles
-- [ ] Hits, damage, death and respawn at base
-- [ ] Base station: choose weapons and fuel, repair
+Duel mode first (playable), then a race mode.
+
+- [x] `levels/duel/`: pads[0] and pads[1] are the players' bases (Hólmganga,
+      Vígvöllr)
+- [x] Two ships: `sim.Duel` gives each player a World sharing the Level;
+      keys WASD + S fire, arrows + down fire (gamepad: `readInput(player)`
+      from gamepad.md, later)
+- [x] Split screen: two cameras rendering to separate offscreen Images
+- [x] Shooting and projectiles
+- [x] Hits, damage (4 hits), death and respawn at base; first to 5 wins
+- [x] Repair and refuel while landed on the own base
+- [ ] Play-test the duel; tune `sim/duel.go` (bullet speed, damage, reload)
+- [ ] Race mode: its own game mode and levels, both players fly the same
+      course (e.g. crystals or checkpoints), fastest wins
+- [ ] Base station: choose weapons and fuel
 - [ ] Mass = ship + fuel + ammo (the trade-off between load and speed)
 - [ ] Liquid (drag per pixel) and more levels
 

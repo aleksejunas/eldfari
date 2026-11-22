@@ -34,7 +34,7 @@ var (
 )
 
 // modeNames are the folders in levels/, also used in best-time keys and the HUD.
-var modeNames = map[sim.Mode]string{sim.ModeCrystals: "crystals", sim.ModeCargo: "cargo"}
+var modeNames = map[sim.Mode]string{sim.ModeCrystals: "crystals", sim.ModeCargo: "cargo", sim.ModeDuel: "duel"}
 
 type Game struct {
 	levels map[sim.Mode][]*sim.Level
@@ -42,7 +42,9 @@ type Game struct {
 	lvl    int // index into levels[mode]
 	best   *bestTimes
 
-	world      *sim.World
+	world      *sim.World // in a duel: player 1's
+	duel       *sim.Duel  // nil outside duel mode; see duel.go
+	views      [2]duelView
 	parts      []particle
 	camX, camY float64 // top-left corner of the view, in world coordinates
 	prev       sim.State
@@ -70,8 +72,12 @@ func newGame() *Game {
 	if err != nil {
 		log.Fatalf("cargo level files:\n%v", err)
 	}
+	duel, err := sim.LoadDir(levels.Duel, sim.ModeDuel)
+	if err != nil {
+		log.Fatalf("duel level files:\n%v", err)
+	}
 	g := &Game{
-		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo},
+		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo, sim.ModeDuel: duel},
 		best:    loadBestTimes(),
 		w:       startW,
 		h:       startH,
@@ -90,7 +96,13 @@ func (g *Game) setLevel(i int) {
 	ls := g.levels[g.mode]
 	n := len(ls)
 	g.lvl = ((i % n) + n) % n
-	g.world = sim.NewWorld(ls[g.lvl])
+	g.duel = nil
+	if g.mode == sim.ModeDuel {
+		g.duel = sim.NewDuel(ls[g.lvl])
+		g.world = g.duel.Players[0].World
+	} else {
+		g.world = sim.NewWorld(ls[g.lvl])
+	}
 	g.reset()
 }
 
@@ -101,8 +113,12 @@ func (g *Game) bestKey() string { return modeNames[g.mode] + "/" + g.world.Level
 func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
 
 func (g *Game) reset() {
-	g.world.Reset()
 	g.parts = nil
+	if g.duel != nil {
+		g.resetDuel()
+		return
+	}
+	g.world.Reset()
 	g.prev = sim.Landed
 	g.wasWon = false
 	g.camX, g.camY = g.cameraTarget()
@@ -153,6 +169,10 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		g.showFPS = !g.showFPS
 	}
+	if g.duel != nil {
+		g.updateDuel()
+		return nil
+	}
 
 	in := sim.Input{
 		Left:   ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA),
@@ -166,29 +186,8 @@ func (g *Game) Update() error {
 	}
 	g.wasWon = g.world.Won
 
-	s := &g.world.Ship
-	if s.Thrusting {
-		for i := 0; i < 2; i++ {
-			g.parts = append(g.parts, exhaust(s))
-		}
-	}
-	if s.Refuelling && g.tick%3 == 0 {
-		g.parts = append(g.parts, refuelSpark(s))
-	}
-	if s.State == sim.Crashed && g.prev != sim.Crashed {
-		g.parts = append(g.parts, explosion(s)...)
-	}
-	g.prev = s.State
-
-	alive := g.parts[:0]
-	for i := range g.parts {
-		p := g.parts[i]
-		p.update()
-		if p.life > 0 {
-			alive = append(alive, p)
-		}
-	}
-	g.parts = alive
+	g.shipEffects(&g.world.Ship, &g.prev)
+	g.updateParticles()
 
 	tx, ty := g.cameraTarget()
 	g.camX += (tx - g.camX) * 0.12
@@ -202,15 +201,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawMenu(screen)
 		return
 	}
+	if g.duel != nil {
+		g.drawDuel(screen)
+		return
+	}
 	screen.Fill(colBG)
+	g.drawScene(screen, g.camX, g.camY, -1)
+	g.drawHUD(screen)
+}
+
+// drawScene draws the level, the ships, the arrows and the particles onto dst,
+// seen from camX, camY. me is the player whose view it is in a duel (the
+// arrow points to the other one), or -1 outside a duel.
+func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 	l := g.world.Level
-	s := &g.world.Ship
 	z := g.zoom()
 
 	// ln draws a world line segment: offset by the camera, scaled by zoom.
 	// Line width follows zoom, but a bit weaker so it doesn't get chunky.
 	ln := func(x0, y0, x1, y1, w float64, c color.RGBA) {
-		line(screen, (x0-g.camX)*z, (y0-g.camY)*z, (x1-g.camX)*z, (y1-g.camY)*z, w*z*0.75, c)
+		line(dst, (x0-camX)*z, (y0-camY)*z, (x1-camX)*z, (y1-camY)*z, w*z*0.75, c)
 	}
 
 	for _, poly := range l.Polys {
@@ -242,27 +252,27 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawCargo(ln)
 	}
 
-	if s.State != sim.Crashed {
-		v := s.Points()
-		for i := range v {
-			a, b := v[i], v[(i+1)%len(v)]
-			ln(a.X, a.Y, b.X, b.Y, 2, colShip)
+	if g.duel != nil {
+		for i := range g.duel.Players {
+			drawShip(ln, &g.duel.Players[i].Ship, playerCol[i])
 		}
-		if s.Thrusting {
-			length := 8 + rand.Float64()*8
-			a := s.ToWorld(-4, sim.ShipRear)
-			b := s.ToWorld(4, sim.ShipRear)
-			tip := s.ToWorld(0, sim.ShipRear+length)
-			ln(a.X, a.Y, tip.X, tip.Y, 2, colPad)
-			ln(b.X, b.Y, tip.X, tip.Y, 2, colPad)
+		for _, b := range g.duel.Bullets {
+			ln(b.X, b.Y, b.X-b.VX*0.02, b.Y-b.VY*0.02, 2, playerCol[b.Owner])
 		}
+	} else {
+		drawShip(ln, &g.world.Ship, colShip)
 	}
 
 	// Arrows on a ring around the ship towards targets that are off screen:
-	// the nearest crystal or the cargo, and the pad to head for.
-	vw, vh := float64(g.w)/z, float64(g.h)/z
+	// the nearest crystal or the cargo, and the pad to head for. In a duel:
+	// the other player.
+	vw, vh := float64(dst.Bounds().Dx())/z, float64(dst.Bounds().Dy())/z
+	s := &g.world.Ship
+	if me >= 0 {
+		s = &g.duel.Players[me].Ship
+	}
 	arrow := func(tx, ty float64, c color.RGBA) {
-		if tx > g.camX && tx < g.camX+vw && ty > g.camY && ty < g.camY+vh {
+		if tx > camX && tx < camX+vw && ty > camY && ty < camY+vh {
 			return
 		}
 		a := math.Atan2(ty-s.Y, tx-s.X)
@@ -275,7 +285,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ln(lx, ly, rx, ry, 2, c)
 		ln(rx, ry, tipX, tipY, 2, c)
 	}
-	if s.State != sim.Crashed && !g.world.Won {
+	switch {
+	case me >= 0:
+		if other := &g.duel.Players[1-me]; s.State != sim.Crashed && other.Alive() {
+			arrow(other.Ship.X, other.Ship.Y, playerCol[1-me])
+		}
+	case s.State != sim.Crashed && !g.world.Won:
 		if c, ok := g.world.NearestCrystal(); ok {
 			arrow(c.X, c.Y, colGem)
 		}
@@ -293,13 +308,60 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// them all in one batch.
 	for _, p := range g.parts {
 		dx, dy := math.Cos(p.ang)*p.length/2, math.Sin(p.ang)*p.length/2
-		x0, y0 := (p.x-dx-g.camX)*z, (p.y-dy-g.camY)*z
-		x1, y1 := (p.x+dx-g.camX)*z, (p.y+dy-g.camY)*z
+		x0, y0 := (p.x-dx-camX)*z, (p.y-dy-camY)*z
+		x1, y1 := (p.x+dx-camX)*z, (p.y+dy-camY)*z
 		c := fade(p.col, p.life/p.maxLife)
-		vector.StrokeLine(screen, float32(x0), float32(y0), float32(x1), float32(y1), float32(1.5*z), c, false)
+		vector.StrokeLine(dst, float32(x0), float32(y0), float32(x1), float32(y1), float32(1.5*z), c, false)
 	}
+}
 
-	g.drawHUD(screen)
+// shipEffects adds exhaust, refuel sparks and wreckage for a ship. prev is
+// its state in the previous step, to see when it has just crashed.
+func (g *Game) shipEffects(s *sim.Ship, prev *sim.State) {
+	if s.Thrusting {
+		for range 2 {
+			g.parts = append(g.parts, exhaust(s))
+		}
+	}
+	if s.Refuelling && g.tick%3 == 0 {
+		g.parts = append(g.parts, refuelSpark(s))
+	}
+	if s.State == sim.Crashed && *prev != sim.Crashed {
+		g.parts = append(g.parts, explosion(s)...)
+	}
+	*prev = s.State
+}
+
+func (g *Game) updateParticles() {
+	alive := g.parts[:0]
+	for i := range g.parts {
+		p := g.parts[i]
+		p.update()
+		if p.life > 0 {
+			alive = append(alive, p)
+		}
+	}
+	g.parts = alive
+}
+
+// drawShip draws a ship that isn't wrecked, with a flame while thrusting.
+func drawShip(ln func(x0, y0, x1, y1, w float64, c color.RGBA), s *sim.Ship, col color.RGBA) {
+	if s.State == sim.Crashed {
+		return
+	}
+	v := s.Points()
+	for i := range v {
+		a, b := v[i], v[(i+1)%len(v)]
+		ln(a.X, a.Y, b.X, b.Y, 2, col)
+	}
+	if s.Thrusting {
+		length := 8 + rand.Float64()*8
+		a := s.ToWorld(-4, sim.ShipRear)
+		b := s.ToWorld(4, sim.ShipRear)
+		tip := s.ToWorld(0, sim.ShipRear+length)
+		ln(a.X, a.Y, tip.X, tip.Y, 2, colPad)
+		ln(b.X, b.Y, tip.X, tip.Y, 2, colPad)
+	}
 }
 
 // Layout draws at the screen's real resolution (window size × the screen's

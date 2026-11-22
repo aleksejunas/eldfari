@@ -12,13 +12,14 @@ import (
 )
 
 // modeOrder is the order of the modes in the menu.
-var modeOrder = []sim.Mode{sim.ModeCrystals, sim.ModeCargo}
+var modeOrder = []sim.Mode{sim.ModeCrystals, sim.ModeCargo, sim.ModeDuel}
 
 // modeHelp is a short description of each mode, in lines that fit the
 // menu's left column.
 var modeHelp = map[sim.Mode][]string{
 	sim.ModeCrystals: {"Collect every crystal,", "then land on the start pad."},
 	sim.ModeCargo:    {"Hook the cargo and lower it", "onto the marked pad."},
+	sim.ModeDuel:     {"Two players, split screen.", "First to five kills wins."},
 }
 
 // menu is the mode and level chooser: which mode is selected, and which
