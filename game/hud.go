@@ -147,7 +147,7 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 		cw = g.print(screen, status, right, margin+26, normal, text.AlignEnd, col)
 	}
 	g.diamond(screen, right-cw-12, margin+35, colGem)
-	if b := g.best.get(g.bestKey()); b > 0 {
+	if b := g.best.best(g.bestKey()); b > 0 {
 		g.print(screen, "BEST "+fmtTime(b), right, margin+48, small, text.AlignEnd, colDim)
 	}
 
@@ -155,9 +155,9 @@ func (g *Game) drawHUD(screen *ebiten.Image) {
 	msg, sub, msgCol := "", "", colShip
 	switch {
 	case w.Won && w.Level.Mode == sim.ModeCargo:
-		msg, sub, msgCol = "DELIVERED!  "+fmtTime(w.Time), "R retry  ·  N next level  ·  M menu", colGem
+		msg, sub, msgCol = "DELIVERED!  "+fmtTime(w.Time), g.winSub(), colGem
 	case w.Won:
-		msg, sub, msgCol = "YOU WIN!  "+fmtTime(w.Time), "R retry  ·  N next level  ·  M menu", colGem
+		msg, sub, msgCol = "YOU WIN!  "+fmtTime(w.Time), g.winSub(), colGem
 	case s.State == sim.Crashed:
 		msg, sub, msgCol = "CRASHED", "R restart", colTerrain
 	case w.NGot == total && total > 0:
@@ -210,4 +210,14 @@ func (g *Game) diamond(dst *ebiten.Image, x, y float64, c color.Color) {
 		b := pts[(i+1)%len(pts)]
 		line(dst, a[0]*k, a[1]*k, b[0]*k, b[1]*k, 1.5*k, c)
 	}
+}
+
+// winSub is the line under the win message: the place in the top 10 if the
+// time made it, and the keys.
+func (g *Game) winSub() string {
+	keys := "R retry  ·  N next level  ·  M menu"
+	if g.lastRank >= 0 {
+		return fmt.Sprintf("#%d in the top 10  ·  %s", g.lastRank+1, keys)
+	}
+	return keys
 }

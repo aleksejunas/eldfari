@@ -4,7 +4,7 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: gamepad support (one pad per player).
+- Nothing in progress. Last done: local top 10 per level with initials.
   Duel, race and pads are not run by Claude: need play-testing.
 
 ## Next

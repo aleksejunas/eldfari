@@ -108,7 +108,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 	big := g.face(fontTitle, 40)
 	num := g.face(fontNum, sizeText)
 
-	left := W/2 - 300
+	left := W/2 - 420 // three columns: modes, levels, top 10
 	g.print(screen, "eldfari", left, H*0.14, big, text.AlignStart, colShip)
 
 	selMode, selLevel := g.menu.selected()
@@ -142,8 +142,25 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 			g.print(screen, "›", lx-18, y, title, text.AlignStart, col)
 		}
 		g.print(screen, fmt.Sprintf("%d  %s", i+1, l.Name), lx, y, normal, text.AlignStart, col)
-		if b := g.best.get(modeNames[selMode] + "/" + l.Name); b > 0 {
+		if b := g.best.best(modeNames[selMode] + "/" + l.Name); b > 0 {
 			g.print(screen, fmtTime(b), lx+300, y, num, text.AlignEnd, col)
+		}
+	}
+
+	// Top 10 of the selected level (only modes with times).
+	if selMode == sim.ModeCrystals || selMode == sim.ModeCargo {
+		tx := lx + 380
+		l := g.levels[selMode][selLevel]
+		g.print(screen, "TOP 10  ·  "+l.Name, tx, top, small, text.AlignStart, colDim)
+		top10 := g.best.Top[modeNames[selMode]+"/"+l.Name]
+		if len(top10) == 0 {
+			g.print(screen, "no times yet", tx, top+28, normal, text.AlignStart, colDim)
+		}
+		for i, e := range top10 {
+			y := top + 28 + float64(i)*26
+			g.print(screen, fmt.Sprintf("%2d", i+1), tx, y, num, text.AlignStart, colDim)
+			g.print(screen, e.Name, tx+36, y, num, text.AlignStart, colShip)
+			g.print(screen, fmtTime(e.Time), tx+200, y, num, text.AlignEnd, colShip)
 		}
 	}
 

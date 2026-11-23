@@ -56,8 +56,8 @@ go run .
 go test ./...    # physics, collision, landing and level validation
 ```
 
-Best times are saved to `~/.config/eldfari/best.json` (per mode and level
-name).
+A top 10 per level with initials is saved to
+`~/.config/eldfari/scores.json` (localStorage in the browser).
 
 Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 <https://ebitengine.org/en/documents/install.html> if the build complains.
@@ -98,8 +98,8 @@ Both are build output and ignored by git.
 - `game/hud.go`: the HUD (fuel, speed, time, crystals, messages), drawn with
   the Go fonts and scaled by the window height.
 - `game/fx.go`: exhaust, wreckage and refuel sparks (line segments).
-- `game/besttimes.go`: best time per level, saved as JSON in the user's
-  config dir (memory only in the browser).
+- `game/scores.go`: top 10 per level with initials (`entry.go` is the
+  input), saved as JSON in the config dir or in localStorage.
 - `game/version.go`: git commit and time the binary was built from, shown in
   the HUD.
 - `web/index.html`: page that loads `wasm_exec.js` and starts `eldfari.wasm`.

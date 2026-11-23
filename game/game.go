@@ -40,7 +40,7 @@ type Game struct {
 	levels map[sim.Mode][]*sim.Level
 	mode   sim.Mode
 	lvl    int // index into levels[mode]
-	best   *bestTimes
+	best   *scores
 
 	world      *sim.World // in a duel: player 1's
 	duel       *sim.Duel  // nil outside duel mode; see twoplayer.go
@@ -62,6 +62,9 @@ type Game struct {
 
 	inMenu bool // the mode and level chooser is shown instead of the game
 	menu   menu
+
+	entry    *nameEntry // initials input after a top-10 time, or nil
+	lastRank int        // place of the last saved time in its top 10, -1 if none
 
 	sticks    [2]stickState // per player, for the stick's dead zone
 	menuStick [2]int        // stick direction last step, for menu steps
@@ -86,7 +89,7 @@ func newGame() *Game {
 	}
 	g := &Game{
 		levels:  map[sim.Mode][]*sim.Level{sim.ModeCrystals: crystals, sim.ModeCargo: cargo, sim.ModeDuel: duel, sim.ModeRace: race},
-		best:    loadBestTimes(),
+		best:    loadScores(),
 		w:       startW,
 		h:       startH,
 		scale:   1,
@@ -126,6 +129,7 @@ func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
 
 func (g *Game) reset() {
 	g.parts = nil
+	g.entry, g.lastRank = nil, -1
 	if g.players() != nil {
 		g.resetTwoPlayer()
 		return
@@ -162,6 +166,10 @@ func (g *Game) Update() error {
 		g.updateMenu()
 		return nil
 	}
+	if g.entry != nil {
+		g.updateEntry()
+		return nil
+	}
 	ids := pads()
 	// Pads: Start = menu, Back = restart, LB/RB = previous/next level, Y = zoom.
 	padKey := func(b ebiten.StandardGamepadButton) bool { return padJustPressed(ids, b) }
@@ -192,8 +200,8 @@ func (g *Game) Update() error {
 
 	g.world.Step(g.readInput(-1, ids))
 
-	if g.world.Won && !g.wasWon {
-		g.best.record(g.bestKey(), g.world.Time)
+	if g.world.Won && !g.wasWon && g.best.qualifies(g.bestKey(), g.world.Time) {
+		g.entry = newNameEntry(g.bestKey(), g.world.Time, g.best.Last)
 	}
 	g.wasWon = g.world.Won
 
@@ -219,6 +227,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(colBG)
 	g.drawScene(screen, g.camX, g.camY, -1)
 	g.drawHUD(screen)
+	if g.entry != nil {
+		g.drawEntry(screen)
+	}
 }
 
 // drawScene draws the level, the ships, the arrows and the particles onto dst,
