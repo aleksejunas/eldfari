@@ -21,9 +21,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 - `sim/` has no Ebitengine import: game logic is testable without a window.
 - One folder per mode in `levels/`, no mode field in the JSON.
-- Cargo hooks on within 120 px with a winch: 80 px was too fiddly to hook.
-- Cargo mass 0.4 and a springy damped rope: 0.8 and a rigid rope were
-  unplayable in the first test.
+- Cargo: hook within 120 px with a winch, mass 0.4, springy rope (the first
+  version was unplayable).
 - Old Norse level names; losing best times on a rename is fine.
 - Duel and race: each player a World sharing the Level, `sim.Player` shared
   (no interface yet). Duel: dying gives the other a point. Race: crystals
@@ -38,7 +37,6 @@ Rewrite this file instead of appending. Max ~40 lines.
   touchpad (same name), which gave stuck thrust and turning.
 - PDP Switch pad: no input over USB (Bluetooth only); own mapping in
   `game/input.go` (extraMappings). RT uses the pressed state.
-- Bombs as a second weapon: aiming the nose while flying was too hard.
 
 ## Known problems
 
