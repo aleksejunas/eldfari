@@ -139,8 +139,8 @@ Duel mode first (playable), then a race mode.
 
 ## Small and useful (done)
 
-- [x] Local top 10 per level with initials, shown in the menu
-- [ ] Two-player tables: wins per initials in duel and race
+- [x] Hall of fame: top 10 times per level with initials, and wins per
+      initials in duel and race (the winner enters them), shown in the menu
 - [x] Version info in the HUD (git commit + time), to see which build the web
       version is running (`game/version.go`)
 - [x] Arrows towards the nearest crystal and pad (start pad once all

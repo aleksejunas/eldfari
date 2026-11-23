@@ -4,7 +4,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: local top 10 per level with initials.
+- Nothing in progress. Last done: hall of fame (top 10 times per level,
+  wins per initials in duel and race).
   Duel, race and pads are not run by Claude: need play-testing.
 
 ## Next

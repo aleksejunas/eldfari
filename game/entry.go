@@ -8,14 +8,17 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
-// nameEntry is the initials input after a time that makes the top 10, like
-// on an arcade machine: three letters A–Z.
+// nameEntry is the initials input for the hall of fame, like on an arcade
+// machine: three letters A–Z. Either after a time that makes a level's top
+// 10, or for the winner of a duel or race (winMode set).
 type nameEntry struct {
 	letters [3]byte
 	pos     int // the letter being changed
 	level   string
 	time    float64
-	age     int // frames shown; typing is ignored at first (see updateEntry)
+	winMode string // "duel" or "race" for a win, "" for a time
+	player  int    // the winner, for the title
+	age     int    // frames shown; typing is ignored at first (see updateEntry)
 }
 
 func newNameEntry(level string, t float64, last string) *nameEntry {
@@ -101,7 +104,11 @@ func (g *Game) updateEntry() {
 }
 
 func (g *Game) saveEntry() {
-	g.lastRank = g.best.add(g.entry.level, g.entry.name(), g.entry.time)
+	if e := g.entry; e.winMode != "" {
+		g.lastWins = g.best.addWin(e.winMode, e.name())
+	} else {
+		g.lastRank = g.best.add(e.level, e.name(), e.time)
+	}
 	g.entry = nil
 }
 
@@ -114,7 +121,11 @@ func (g *Game) drawEntry(screen *ebiten.Image) {
 	y := H * 0.42
 	help := "type initials  ·  ↑↓ change  ·  ← → move  ·  Enter save        pad: ↑↓ ← →, A next, B back"
 	g.badge(screen, W/2, y-12, g.textWidth(help, small)+40, 130)
-	g.print(screen, fmt.Sprintf("TOP 10!  %s", fmtTime(e.time)), W/2, y, g.face(fontTitle, sizeText), text.AlignCenter, colGem)
+	title := fmt.Sprintf("HALL OF FAME!  %s", fmtTime(e.time))
+	if e.winMode != "" {
+		title = fmt.Sprintf("PLAYER %d WINS  ·  HALL OF FAME", e.player+1)
+	}
+	g.print(screen, title, W/2, y, g.face(fontTitle, sizeText), text.AlignCenter, colGem)
 	for i, c := range e.letters {
 		x := W/2 + float64(i-1)*40
 		col := colDim

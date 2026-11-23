@@ -65,6 +65,8 @@ type Game struct {
 
 	entry    *nameEntry // initials input after a top-10 time, or nil
 	lastRank int        // place of the last saved time in its top 10, -1 if none
+	lastWins int        // wins of the last saved winner, 0 if none
+	prevWin  int        // the duel's or race's winner in the last step
 
 	sticks    [2]stickState // per player, for the stick's dead zone
 	menuStick [2]int        // stick direction last step, for menu steps
@@ -129,7 +131,7 @@ func (g *Game) zoom() float64 { return zoomSteps[g.zoomIdx] * g.scale }
 
 func (g *Game) reset() {
 	g.parts = nil
-	g.entry, g.lastRank = nil, -1
+	g.entry, g.lastRank, g.lastWins, g.prevWin = nil, -1, 0, -1
 	if g.players() != nil {
 		g.resetTwoPlayer()
 		return

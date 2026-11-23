@@ -82,7 +82,8 @@ Everything outside the world is solid.
   crystals, easy to hard: 10 Vindáss, 20 Búr, 30 Hilla, 40 Grjót, 50
   Langferð, 60 Ljóri, 70 Myrkr. `cmd/levelstat` measures them
   with the cargo hanging below the ship (gap 200–424 px).
-- High scores: a top 10 with initials per level (`game/scores.go`), keyed by
+- Hall of fame (`game/scores.go`): wins per initials in duel/race, and a
+  top 10 of times with initials per level, keyed by
   mode and level name (`crystals/Hellir`). Renaming a level loses its
   records, which is fine.
 

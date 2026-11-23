@@ -212,12 +212,12 @@ func (g *Game) diamond(dst *ebiten.Image, x, y float64, c color.Color) {
 	}
 }
 
-// winSub is the line under the win message: the place in the top 10 if the
-// time made it, and the keys.
+// winSub is the line under the win message: the place in the hall of fame if
+// the time made it, and the keys.
 func (g *Game) winSub() string {
 	keys := "R retry  ·  N next level  ·  M menu"
 	if g.lastRank >= 0 {
-		return fmt.Sprintf("#%d in the top 10  ·  %s", g.lastRank+1, keys)
+		return fmt.Sprintf("#%d in the hall of fame  ·  %s", g.lastRank+1, keys)
 	}
 	return keys
 }

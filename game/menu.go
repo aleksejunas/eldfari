@@ -108,7 +108,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 	big := g.face(fontTitle, 40)
 	num := g.face(fontNum, sizeText)
 
-	left := W/2 - 420 // three columns: modes, levels, top 10
+	left := W/2 - 420 // three columns: modes, levels, hall of fame
 	g.print(screen, "eldfari", left, H*0.14, big, text.AlignStart, colShip)
 
 	selMode, selLevel := g.menu.selected()
@@ -147,11 +147,24 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 		}
 	}
 
-	// Top 10 of the selected level (only modes with times).
-	if selMode == sim.ModeCrystals || selMode == sim.ModeCargo {
-		tx := lx + 380
+	// Hall of fame: the selected level's top 10 times, or in the two-player
+	// modes the most wins.
+	tx := lx + 380
+	if selMode == sim.ModeDuel || selMode == sim.ModeRace {
+		g.print(screen, "HALL OF FAME  ·  WINS", tx, top, small, text.AlignStart, colDim)
+		wins := g.best.topWins(modeNames[selMode])
+		if len(wins) == 0 {
+			g.print(screen, "no wins yet", tx, top+28, normal, text.AlignStart, colDim)
+		}
+		for i, w := range wins {
+			y := top + 28 + float64(i)*26
+			g.print(screen, fmt.Sprintf("%2d", i+1), tx, y, num, text.AlignStart, colDim)
+			g.print(screen, w.Name, tx+36, y, num, text.AlignStart, colShip)
+			g.print(screen, fmt.Sprint(w.Wins), tx+200, y, num, text.AlignEnd, colShip)
+		}
+	} else {
 		l := g.levels[selMode][selLevel]
-		g.print(screen, "TOP 10  ·  "+l.Name, tx, top, small, text.AlignStart, colDim)
+		g.print(screen, "HALL OF FAME  ·  "+l.Name, tx, top, small, text.AlignStart, colDim)
 		top10 := g.best.Top[modeNames[selMode]+"/"+l.Name]
 		if len(top10) == 0 {
 			g.print(screen, "no times yet", tx, top+28, normal, text.AlignStart, colDim)

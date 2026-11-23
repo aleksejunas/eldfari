@@ -56,8 +56,9 @@ go run .
 go test ./...    # physics, collision, landing and level validation
 ```
 
-A top 10 per level with initials is saved to
-`~/.config/eldfari/scores.json` (localStorage in the browser).
+The hall of fame (a top 10 of times per level, and wins per initials in duel
+and race) is saved to `~/.config/eldfari/scores.json` (localStorage in the
+browser).
 
 Linux needs the usual Ebitengine libraries (X11/GL/ALSA). See
 <https://ebitengine.org/en/documents/install.html> if the build complains.

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"slices"
+	"strings"
 )
 
 // topSize is how many times each level's high-score list keeps.
@@ -16,18 +17,22 @@ type score struct {
 	Time float64 `json:"time"`
 }
 
-// scores holds a top 10 per level, keyed by mode and level name
-// ("crystals/Hellir"), fastest first, and the initials last used. Where they
+// scores is the hall of fame: a top 10 of times per level, keyed by mode and
+// level name ("crystals/Hellir"), fastest first; wins per initials in the
+// two-player modes, keyed by mode ("duel"); and the initials last used. Where they
 // are stored depends on the platform: a JSON file on desktop (scores_file.go)
 // and localStorage in the browser (scores_js.go).
 type scores struct {
-	Top  map[string][]score `json:"top"`
-	Last string             `json:"last"` // initials offered for the next entry
+	Top  map[string][]score        `json:"top"`
+	Wins map[string]map[string]int `json:"wins"` // mode -> initials -> wins
+	Last string                    `json:"last"` // initials offered for the next entry
 
 	save func([]byte) error // nil = keep in memory only
 }
 
-func newScores() *scores { return &scores{Top: map[string][]score{}, Last: "AAA"} }
+func newScores() *scores {
+	return &scores{Top: map[string][]score{}, Wins: map[string]map[string]int{}, Last: "AAA"}
+}
 
 // decodeScores reads saved scores. Bad data gives empty scores and an error.
 func decodeScores(data []byte) (*scores, error) {
@@ -37,6 +42,9 @@ func decodeScores(data []byte) (*scores, error) {
 	}
 	if err := json.Unmarshal(data, s); err != nil || s.Top == nil {
 		return newScores(), err
+	}
+	if s.Wins == nil { // saved before there were wins
+		s.Wins = map[string]map[string]int{}
 	}
 	return s, nil
 }
@@ -75,6 +83,40 @@ func (s *scores) add(level, name string, t float64) int {
 	s.Top[level], s.Last = top, name
 	s.store()
 	return i
+}
+
+// addWin counts a win for the initials in a two-player mode, remembers the
+// initials, saves, and returns the number of wins they have now.
+func (s *scores) addWin(mode, name string) int {
+	if s.Wins[mode] == nil {
+		s.Wins[mode] = map[string]int{}
+	}
+	s.Wins[mode][name]++
+	s.Last = name
+	s.store()
+	return s.Wins[mode][name]
+}
+
+// winner is one line in a two-player hall of fame.
+type winner struct {
+	Name string
+	Wins int
+}
+
+// topWins returns the ten with the most wins in the mode, most first; equal
+// wins in alphabetical order.
+func (s *scores) topWins(mode string) []winner {
+	var out []winner
+	for name, n := range s.Wins[mode] {
+		out = append(out, winner{name, n})
+	}
+	slices.SortFunc(out, func(a, b winner) int {
+		if a.Wins != b.Wins {
+			return b.Wins - a.Wins
+		}
+		return strings.Compare(a.Name, b.Name)
+	})
+	return out[:min(len(out), topSize)]
 }
 
 func (s *scores) store() {

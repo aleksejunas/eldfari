@@ -60,6 +60,12 @@ func (g *Game) updateTwoPlayer(ids []ebiten.GamepadID) {
 	} else {
 		g.race.Step(in)
 	}
+	// A new winner (not a draw) enters initials for the hall of fame.
+	if w := g.winner(); w != g.prevWin && w >= 0 && w <= 1 {
+		g.entry = newNameEntry("", 0, g.best.Last)
+		g.entry.winMode, g.entry.player = modeNames[g.mode], w
+	}
+	g.prevWin = g.winner()
 	ps := g.players()
 	for i := range ps {
 		v := &g.views[i]
@@ -101,6 +107,9 @@ func (g *Game) drawTwoPlayer(screen *ebiten.Image) {
 	}
 	line(screen, float64(half), 0, float64(half), float64(g.h), 2*g.scale, colDim)
 	g.drawTwoPlayerHUD(screen)
+	if g.entry != nil {
+		g.drawEntry(screen)
+	}
 }
 
 // drawPlayerHUD draws player i's fuel (and health in a duel) and keys in
@@ -193,7 +202,11 @@ func (g *Game) drawTwoPlayerHUD(screen *ebiten.Image) {
 	case w == sim.RaceDraw:
 		msg, sub = "DRAW!", "R rematch  ·  N next level  ·  M menu"
 	case w >= 0:
-		msg, sub, col = fmt.Sprintf("PLAYER %d WINS!", w+1), "R rematch  ·  N next level  ·  M menu", playerCol[w]
+		sub = "R rematch  ·  N next level  ·  M menu"
+		if g.lastWins > 0 {
+			sub = fmt.Sprintf("%d wins in the hall of fame  ·  %s", g.lastWins, sub)
+		}
+		msg, col = fmt.Sprintf("PLAYER %d WINS!", w+1), playerCol[w]
 	case g.race != nil && g.race.Left() == 0:
 		msg, sub, col = "ALL CRYSTALS TAKEN", "land on a pad", colGem
 	}

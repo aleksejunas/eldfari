@@ -35,3 +35,24 @@ func TestEqualTimeGoesAfterTheOlderOne(t *testing.T) {
 		t.Errorf("an equal time got place %d, want 1 (after the older one)", rank)
 	}
 }
+
+func TestHallOfFameCountsWins(t *testing.T) {
+	s := newScores()
+	for _, name := range []string{"KAI", "ROL", "KAI", "ANN", "KAI", "ROL"} {
+		s.addWin("duel", name)
+	}
+	s.addWin("race", "ANN")
+	got := s.topWins("duel")
+	want := []winner{{"KAI", 3}, {"ROL", 2}, {"ANN", 1}}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("place %d: %v, want %v", i, got[i], want[i])
+		}
+	}
+	if r := s.topWins("race"); len(r) != 1 || r[0] != (winner{"ANN", 1}) {
+		t.Errorf("race: %v, want only ANN with 1 (modes are separate)", r)
+	}
+}
