@@ -12,8 +12,8 @@ const (
 	BulletSpeed   = 420  // px/s, added to the ship's own velocity
 	BulletLife    = 1.6  // s
 	ReloadTime    = 0.25 // s between shots
-	BulletDamage  = 0.25 // of full health: four hits destroy a ship
-	ShipHitRadius = 11.0 // px from the ship's centre
+	BulletDamage  = 0.5  // of full health: two hits destroy a ship (four made shooting pointless)
+	ShipHitRadius = 14.0 // px from the ship's centre; a bit larger than the ship, so hits land
 	RespawnTime   = 2.0  // s from death to spawning at the base
 	RepairRate    = 0.5  // health per second while landed on the own base
 

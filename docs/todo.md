@@ -124,7 +124,7 @@ Duel mode first (playable), then a race mode.
       from gamepad.md, later)
 - [x] Split screen: two cameras rendering to separate offscreen Images
 - [x] Shooting and projectiles
-- [x] Hits, damage (4 hits), death and respawn at base; first to 5 wins
+- [x] Hits, damage (2 hits), death and respawn at base; first to 5 wins
 - [x] Repair and refuel while landed on the own base
 - [x] Bombs: drop with the ship's speed, fall, blast radius 45 px, two
       hits destroy; weapons on fingers that are free while flying

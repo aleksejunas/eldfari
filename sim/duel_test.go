@@ -83,12 +83,13 @@ func TestBulletsDamageThenDestroy(t *testing.T) {
 	if math.Abs(p.Health-(1-BulletDamage)) > 1e-9 || len(d.Bullets) != 0 {
 		t.Fatalf("health %.2f, %d bullets: one hit should take %.2f", p.Health, len(d.Bullets), BulletDamage)
 	}
-	for range 3 {
+	for range int(math.Round(1/BulletDamage)) - 1 { // the rest of the hits it takes
 		shoot(d)
 		run3(d, 1)
 	}
 	if p.Alive() || d.Players[0].Score != 1 {
-		t.Fatalf("alive %v, score %d: four hits should destroy the ship and give a point", p.Alive(), d.Players[0].Score)
+		t.Fatalf("alive %v, score %d: %v hits should destroy the ship and give a point",
+			p.Alive(), d.Players[0].Score, math.Round(1/BulletDamage))
 	}
 	run3(d, int(RespawnTime/Dt)+1)
 	pad := d.Level.Pads[1]
