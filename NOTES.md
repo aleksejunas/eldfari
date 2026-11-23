@@ -28,6 +28,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 - Duel and race: each player a World sharing the Level, `sim.Player` shared
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
+- Ships colliding: both crash, nobody scores (ramming must not pay).
+  Initials: A–Z and '-' only, to keep the hall of fame tidy.
 - Race crash: start again in the air at the last safe place (80 px room,
   120 px below), hanging still until input. No free trip home, no penalty.
 - Duel weapons on fingers free while flying: P1 LShift fire, Space bomb;

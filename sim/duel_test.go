@@ -216,3 +216,25 @@ func TestOwnBombDoesntHurt(t *testing.T) {
 		t.Errorf("health %.2f: your own bomb must not hurt you", d.Players[0].Health)
 	}
 }
+
+func TestShipsCrashIntoEachOther(t *testing.T) {
+	d := duelArena()
+	fly(d.Players[0].World, 480, 300, 100, 0, 0)
+	fly(d.Players[1].World, 520, 300, -100, 0, 0)
+	run3(d, 20)
+	for i, p := range d.Players {
+		if p.Alive() || p.Score != 0 {
+			t.Errorf("player %d: alive %v, score %d; both should crash and nobody score", i, p.Alive(), p.Score)
+		}
+	}
+}
+
+func TestBulletHitLeavesASpark(t *testing.T) {
+	d := duelArena()
+	target(d)
+	shoot(d)
+	run3(d, 1)
+	if len(d.Bullets) != 0 || len(d.Hits) != 1 {
+		t.Errorf("%d bullets, %d hits: the bullet should be gone and the hit shown", len(d.Bullets), len(d.Hits))
+	}
+}

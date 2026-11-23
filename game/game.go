@@ -295,6 +295,14 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 			ln(b.X, b.Y+5, b.X-4, b.Y, 2, c)
 			ln(b.X-4, b.Y, b.X, b.Y-5, 2, c)
 		}
+		for _, h := range g.duel.Hits { // a short spark where a bullet hit
+			k := h.Age / sim.BlastTime
+			r, c := 4+10*k, fade(colGem, 1-k)
+			for j := range 6 {
+				a := float64(j) * math.Pi / 3
+				ln(h.X+r*0.4*math.Cos(a), h.Y+r*0.4*math.Sin(a), h.X+r*math.Cos(a), h.Y+r*math.Sin(a), 2, c)
+			}
+		}
 		for _, b := range g.duel.Blasts {
 			k := b.Age / sim.BlastTime
 			r, c := sim.BlastRadius*(0.4+0.6*k), fade(colPad, 1-k)

@@ -2,14 +2,19 @@ package game
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
+// entryChars are the characters for initials: A–Z, and '-' for those with
+// fewer than three ("KA-"). Kept short so the hall of fame stays tidy.
+const entryChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+
 // nameEntry is the initials input for the hall of fame, like on an arcade
-// machine: three letters A–Z. Either after a time that makes a level's top
+// machine: three of entryChars. Either after a time that makes a level's top
 // 10, or for the winner of a duel or race (winMode set).
 type nameEntry struct {
 	letters [3]byte
@@ -24,7 +29,7 @@ type nameEntry struct {
 func newNameEntry(level string, t float64, last string) *nameEntry {
 	e := &nameEntry{level: level, time: t, letters: [3]byte{'A', 'A', 'A'}}
 	for i := 0; i < len(e.letters) && i < len(last); i++ {
-		if c := last[i]; c >= 'A' && c <= 'Z' {
+		if c := last[i]; strings.IndexByte(entryChars, c) >= 0 {
 			e.letters[i] = c
 		}
 	}
@@ -33,9 +38,11 @@ func newNameEntry(level string, t float64, last string) *nameEntry {
 
 func (e *nameEntry) name() string { return string(e.letters[:]) }
 
-// change steps the current letter through A–Z, wrapping around.
+// change steps the current letter through entryChars, wrapping around.
 func (e *nameEntry) change(d int) {
-	e.letters[e.pos] = byte('A' + ((int(e.letters[e.pos]-'A')+d)%26+26)%26)
+	n := len(entryChars)
+	i := strings.IndexByte(entryChars, e.letters[e.pos])
+	e.letters[e.pos] = entryChars[((i+d)%n+n)%n]
 }
 
 // move goes to the letter left or right, staying within the three.
@@ -57,7 +64,10 @@ func (e *nameEntry) typed(r rune) bool {
 	if r >= 'a' && r <= 'z' {
 		r -= 'a' - 'A'
 	}
-	if r < 'A' || r > 'Z' {
+	if r == '_' || r == ' ' {
+		r = '-'
+	}
+	if r > 127 || strings.IndexByte(entryChars, byte(r)) < 0 {
 		return false
 	}
 	e.letters[e.pos] = byte(r)

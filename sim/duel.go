@@ -33,6 +33,7 @@ type Duel struct {
 	Bullets []Bullet
 	Bombs   []Bomb
 	Blasts  []Blast // recent explosions, for drawing
+	Hits    []Blast // recent bullet hits, for drawing
 	Winner  int     // -1 until a player reaches DuelScore
 }
 
@@ -83,7 +84,7 @@ func (d *Duel) Reset() {
 		p.Score = 0
 		p.spawn()
 	}
-	d.Bullets, d.Bombs, d.Blasts = nil, nil, nil
+	d.Bullets, d.Bombs, d.Blasts, d.Hits = nil, nil, nil, nil
 	d.Winner = -1
 }
 
@@ -132,6 +133,11 @@ func (d *Duel) Step(in [2]Input) {
 			p.Health = min(1, p.Health+RepairRate*Dt)
 		}
 	}
+	if shipsCollide(&d.Players) {
+		for i := range d.Players {
+			d.Players[i].wreck() // both crash; no points, or ramming would pay
+		}
+	}
 	d.moveBullets()
 	d.moveBombs()
 }
@@ -171,6 +177,7 @@ func (d *Duel) moveBullet(b *Bullet) bool {
 		}
 		other := &d.Players[1-b.Owner]
 		if other.Alive() && math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= ShipHitRadius {
+			d.Hits = append(d.Hits, Blast{X: b.X, Y: b.Y})
 			d.damage(1-b.Owner, BulletDamage)
 			return false
 		}
@@ -208,6 +215,13 @@ func (d *Duel) moveBombs() {
 		}
 	}
 	d.Blasts = blasts
+	hits := d.Hits[:0]
+	for _, h := range d.Hits {
+		if h.Age += Dt; h.Age < BlastTime {
+			hits = append(hits, h)
+		}
+	}
+	d.Hits = hits
 
 	falling := d.Bombs[:0]
 	for _, b := range d.Bombs {
@@ -242,6 +256,22 @@ func (d *Duel) explode(b *Bomb) {
 	if math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= BlastRadius {
 		d.damage(1-b.Owner, BombDamage)
 	}
+}
+
+// ShipCollideDist is how close the two ships' centres may come before they
+// crash into each other: about the ship's width.
+const ShipCollideDist = 16.0
+
+// shipsCollide reports whether both ships are in the game and touching.
+func shipsCollide(ps *[2]Player) bool {
+	a, b := &ps[0].Ship, &ps[1].Ship
+	return ps[0].Alive() && ps[1].Alive() && math.Hypot(a.X-b.X, a.Y-b.Y) <= ShipCollideDist
+}
+
+// wreck crashes the player's ship and starts the respawn timer.
+func (p *Player) wreck() {
+	p.Ship.State, p.Ship.VX, p.Ship.VY = Crashed, 0, 0
+	p.Respawn, p.Health = RespawnTime, 0
 }
 
 // died gives the other player a point and starts the respawn timer.

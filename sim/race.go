@@ -130,6 +130,12 @@ func (r *Race) Step(in [2]Input) {
 		}
 	}
 
+	if shipsCollide(&r.Players) {
+		for i := range r.Players {
+			r.Players[i].wreck()
+		}
+	}
+
 	a, b := &r.Players[0], &r.Players[1]
 	if r.Left() == 0 && a.Ship.State == Landed && b.Ship.State == Landed {
 		switch {

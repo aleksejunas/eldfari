@@ -132,3 +132,13 @@ func TestCrashWithoutSafePlaceStartsOnPad(t *testing.T) {
 		t.Errorf("%+v: never flew anywhere safe, so it should start on its pad", s)
 	}
 }
+
+func TestRacersCrashIntoEachOther(t *testing.T) {
+	r := raceArena()
+	fly(r.Players[0].World, 380, 400, 100, 0, 0)
+	fly(r.Players[1].World, 420, 400, -100, 0, 0)
+	step2(r, 20)
+	if r.Players[0].Alive() || r.Players[1].Alive() {
+		t.Error("both racers should crash when they fly into each other")
+	}
+}
