@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -137,6 +138,14 @@ func (g *Game) drawPlayerHUD(dst *ebiten.Image, i int) {
 			col = colTerrain
 		}
 		bar(margin+20, "HEALTH", p.Health, col)
+		power := ""
+		switch {
+		case p.ShieldLeft > 0:
+			power = fmt.Sprintf("SHIELD %.0f", p.ShieldLeft+0.5)
+		case p.OneShotLeft > 0:
+			power = fmt.Sprintf("ONE-SHOT %.0f", p.OneShotLeft+0.5)
+		}
+		g.print(dst, power, x+labelW, margin+40, small, text.AlignStart, colGem)
 	}
 
 	keys := [2]string{"A/D turn  ·  W thrust", "← → turn  ·  ↑ thrust"}
@@ -221,4 +230,34 @@ func (g *Game) drawTwoPlayerHUD(screen *ebiten.Image) {
 	common := "R restart  ·  M menu"
 	g.badge(screen, W/2, H-margin-sizeSmall-8, g.textWidth(common, small)+28, sizeSmall+16)
 	g.print(screen, common, W/2, H-margin-sizeSmall, small, text.AlignCenter, colDim)
+}
+
+// blinkOn makes something blink during its last 2 seconds (left), so you see
+// it is about to run out; otherwise it is always on.
+func blinkOn(left float64, tick int) bool { return left > 2 || tick/6%2 == 0 }
+
+// ring draws a circle as 16 line segments.
+func ring(ln func(x0, y0, x1, y1, w float64, c color.RGBA), x, y, r, w float64, c color.RGBA) {
+	const n = 16
+	for j := range n {
+		a0, a1 := float64(j)*2*math.Pi/n, float64(j+1)*2*math.Pi/n
+		ln(x+r*math.Cos(a0), y+r*math.Sin(a0), x+r*math.Cos(a1), y+r*math.Sin(a1), w, c)
+	}
+}
+
+// drawPowerUp draws a power-up that pulses: a shield is a double ring, the
+// one-shot a red star.
+func drawPowerUp(ln func(x0, y0, x1, y1, w float64, c color.RGBA), pu *sim.PowerUp, tick int) {
+	r := 12 + 2*math.Sin(float64(tick)/8)
+	switch pu.Kind {
+	case sim.Shield:
+		ring(ln, pu.X, pu.Y, r, 2, colGem)
+		ring(ln, pu.X, pu.Y, r*0.55, 1.5, colGem)
+	case sim.OneShot:
+		for j := range 4 {
+			a := float64(j)*math.Pi/4 + float64(tick)/40
+			dx, dy := r*math.Cos(a), r*math.Sin(a)
+			ln(pu.X-dx, pu.Y-dy, pu.X+dx, pu.Y+dy, 2, colTerrain)
+		}
+	}
 }

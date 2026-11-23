@@ -4,8 +4,7 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: hall of fame (top 10 times per level,
-  wins per initials in duel and race).
+- Nothing in progress. Last done: power-ups in the duel (shield, one-shot).
   Duel, race and pads are not run by Claude: need play-testing.
 
 ## Next
@@ -26,6 +25,8 @@ Rewrite this file instead of appending. Max ~40 lines.
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
 - Ships colliding: both crash, nobody scores (ramming must not pay).
+- Power-ups: seeded RNG in sim (tests repeatable, game seeds per duel);
+  lost on death; no arrow to them, finding one is luck.
   Initials: A–Z and '-' only, to keep the hall of fame tidy.
 - Race crash: start again in the air at the last safe place (80 px room,
   120 px below), hanging still until input. No free trip home, no penalty.

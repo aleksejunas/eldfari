@@ -113,6 +113,7 @@ func (g *Game) setLevel(i int) {
 	switch g.mode {
 	case sim.ModeDuel:
 		g.duel = sim.NewDuel(ls[g.lvl])
+		g.duel.SetSeed(uint64(time.Now().UnixNano())) // new power-up places every duel
 		g.world = g.duel.Players[0].World
 	case sim.ModeRace:
 		g.race = sim.NewRace(ls[g.lvl])
@@ -278,7 +279,18 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 
 	if ps := g.players(); ps != nil {
 		for i := range ps {
-			drawShip(ln, &ps[i].Ship, playerCol[i])
+			p := &ps[i]
+			col := playerCol[i]
+			if p.OneShotLeft > 0 && blinkOn(p.OneShotLeft, g.tick) {
+				col = colTerrain // one-shot power-up: a red ship
+			}
+			drawShip(ln, &p.Ship, col)
+			if p.ShieldLeft > 0 && p.Alive() && blinkOn(p.ShieldLeft, g.tick) {
+				ring(ln, p.Ship.X, p.Ship.Y, 20, 1.5, playerCol[i])
+			}
+		}
+		if pu := g.duel.PowerUp; pu != nil && blinkOn(pu.Life, g.tick) {
+			drawPowerUp(ln, pu, g.tick)
 		}
 	} else {
 		drawShip(ln, &g.world.Ship, colShip)

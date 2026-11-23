@@ -33,6 +33,10 @@ fall, and explode near the other ship or on the terrain. Dying gives the
 other a point; first to 5 wins. Land on your own base to refuel and
 repair.
 
+Now and then a power-up appears somewhere in a duel, for 15 s: a shield
+(no damage from shots or bombs) or a one-shot (every hit destroys). Fly
+through it; it lasts 10 s, or until you die.
+
 Race mode: two players, the same keys without firing, race for the same
 crystals. When all are taken and both have landed, most crystals wins.
 

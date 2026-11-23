@@ -1,6 +1,9 @@
 package sim
 
-import "math"
+import (
+	"math"
+	"math/rand/v2"
+)
 
 // Duel mode: two players in the same level shoot each other. Each player has
 // a World of their own for their ship, sharing the Level, so all the ship
@@ -32,9 +35,13 @@ type Duel struct {
 	Players [2]Player
 	Bullets []Bullet
 	Bombs   []Bomb
-	Blasts  []Blast // recent explosions, for drawing
-	Hits    []Blast // recent bullet hits, for drawing
-	Winner  int     // -1 until a player reaches DuelScore
+	Blasts  []Blast  // recent explosions, for drawing
+	Hits    []Blast  // recent bullet hits, for drawing
+	PowerUp *PowerUp // the power-up that is out, or nil (see powerup.go)
+
+	rng         *rand.Rand
+	nextPowerUp float64 // seconds until the next power-up appears
+	Winner      int     // -1 until a player reaches DuelScore
 }
 
 type Player struct {
@@ -45,6 +52,9 @@ type Player struct {
 	Respawn float64 // seconds until the ship spawns again; 0 while alive
 	reload  float64
 	bombIn  float64 // seconds until the next bomb
+
+	ShieldLeft  float64 // seconds of shield power-up left
+	OneShotLeft float64 // seconds of one-shot power-up left
 
 	safe    Pt   // race: the last place the ship flew with room around it
 	hasSafe bool // false until the ship has flown somewhere safe
@@ -74,6 +84,7 @@ func NewDuel(l *Level) *Duel {
 		d.Players[i] = Player{World: NewWorld(l), Base: i}
 	}
 	d.Reset()
+	d.SetSeed(1)
 	return d
 }
 
@@ -85,7 +96,10 @@ func (d *Duel) Reset() {
 		p.spawn()
 	}
 	d.Bullets, d.Bombs, d.Blasts, d.Hits = nil, nil, nil, nil
-	d.Winner = -1
+	d.PowerUp, d.Winner = nil, -1
+	if d.rng != nil {
+		d.nextPowerUp = d.powerUpWait()
+	}
 }
 
 func (p *Player) spawn() {
@@ -93,6 +107,7 @@ func (p *Player) spawn() {
 	p.Reset()
 	p.Ship.X, p.Ship.Y = (pad.X0+pad.X1)/2, pad.Y-ShipRear-0.5
 	p.Health, p.Respawn, p.reload, p.bombIn = 1, 0, 0, 0
+	p.ShieldLeft, p.OneShotLeft = 0, 0
 	p.hasSafe, p.waiting = false, false
 }
 
@@ -140,6 +155,7 @@ func (d *Duel) Step(in [2]Input) {
 	}
 	d.moveBullets()
 	d.moveBombs()
+	d.stepPowerUps()
 }
 
 func (d *Duel) fire(i int) {
@@ -178,7 +194,7 @@ func (d *Duel) moveBullet(b *Bullet) bool {
 		other := &d.Players[1-b.Owner]
 		if other.Alive() && math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= ShipHitRadius {
 			d.Hits = append(d.Hits, Blast{X: b.X, Y: b.Y})
-			d.damage(1-b.Owner, BulletDamage)
+			d.damage(1-b.Owner, b.Owner, BulletDamage)
 			return false
 		}
 	}
@@ -186,11 +202,15 @@ func (d *Duel) moveBullet(b *Bullet) bool {
 	return b.Life > 0
 }
 
-// damage takes health from player i and destroys the ship at zero.
-func (d *Duel) damage(i int, amount float64) {
+// damage takes health from player i, hit by player from, and destroys the
+// ship at zero. A shield blocks it; the one-shot power-up makes it fatal.
+func (d *Duel) damage(i, from int, amount float64) {
 	p := &d.Players[i]
-	if !p.Alive() {
+	if !p.Alive() || p.ShieldLeft > 0 {
 		return
+	}
+	if d.Players[from].OneShotLeft > 0 {
+		amount = 1
 	}
 	if p.Health -= amount; p.Health <= 1e-9 {
 		p.Ship.State = Crashed
@@ -254,7 +274,7 @@ func (d *Duel) explode(b *Bomb) {
 	d.Blasts = append(d.Blasts, Blast{X: b.X, Y: b.Y})
 	other := &d.Players[1-b.Owner]
 	if math.Hypot(b.X-other.Ship.X, b.Y-other.Ship.Y) <= BlastRadius {
-		d.damage(1-b.Owner, BombDamage)
+		d.damage(1-b.Owner, b.Owner, BombDamage)
 	}
 }
 
