@@ -116,6 +116,17 @@ func TestBulletStopsAtTerrain(t *testing.T) {
 	}
 }
 
+func TestWreckDoesntThrust(t *testing.T) {
+	d := duelArena()
+	fly(d.Players[0].World, 500, 470, 0, 300, 0)
+	for range 10 {
+		d.Step([2]Input{{Thrust: true}, {}}) // thrust held into the crash
+	}
+	if p := d.Players[0]; p.Alive() || p.Ship.Thrusting {
+		t.Errorf("alive %v, thrusting %v: a wreck must not thrust", p.Alive(), p.Ship.Thrusting)
+	}
+}
+
 func TestCrashGivesTheOtherAPoint(t *testing.T) {
 	d := duelArena()
 	fly(d.Players[0].World, 500, 400, 0, 300, 0) // falling fast onto the floor

@@ -376,7 +376,7 @@ func (g *Game) updateParticles() {
 	alive := g.parts[:0]
 	for i := range g.parts {
 		p := g.parts[i]
-		p.update()
+		p.update(g.world.Level)
 		if p.life > 0 {
 			alive = append(alive, p)
 		}

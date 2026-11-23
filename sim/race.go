@@ -100,6 +100,9 @@ func (r *Race) Step(in [2]Input) {
 	for i := range r.Players {
 		p := &r.Players[i]
 		if !p.Alive() {
+			// A wreck doesn't thrust or refuel: without this the flags from
+			// the crash step stayed on while it waits.
+			p.Ship.Thrusting, p.Ship.Refuelling = false, false
 			if p.Respawn -= Dt; p.Respawn <= 0 {
 				p.respawnAtSafe()
 			}

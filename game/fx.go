@@ -19,12 +19,19 @@ type particle struct {
 	col           color.RGBA
 }
 
-func (p *particle) update() {
+func (p *particle) update(l *sim.Level) {
+	px, py := p.x, p.y
 	p.vy += p.grav * sim.Dt
 	p.x += p.vx * sim.Dt
 	p.y += p.vy * sim.Dt
 	p.ang += p.spin * sim.Dt
 	p.life -= sim.Dt
+	// Falling wreckage lands on the terrain: back out, bounce a little and
+	// lose most of the speed and spin, so it comes to rest on the ground.
+	if p.grav > 0 && l.Solid(p.x, p.y) {
+		p.x, p.y = px, py
+		p.vx, p.vy, p.spin = p.vx*0.4, -p.vy*0.25, p.spin*0.3
+	}
 }
 
 // exhaust returns an exhaust particle behind the ship, opposite the nose.
@@ -44,21 +51,48 @@ func exhaust(s *sim.Ship) particle {
 	}
 }
 
-// explosion returns wreckage that flies outwards and spins.
+// explosion breaks the ship apart: its three sides tumble away with the
+// ship's speed, small pieces fly out, and a short burst of sparks marks the
+// hit. Pieces fall with real gravity and come to rest on the terrain.
 func explosion(s *sim.Ship) []particle {
-	out := make([]particle, 0, 9)
-	for i := 0; i < 9; i++ {
+	var out []particle
+	v := s.Points()
+	for i := range v {
+		a, b := v[i], v[(i+1)%len(v)]
+		mx, my := (a.X+b.X)/2, (a.Y+b.Y)/2
+		out = append(out, particle{
+			x: mx, y: my,
+			vx:  s.VX*0.3 + (mx-s.X)*4 + (rand.Float64()-0.5)*40,
+			vy:  s.VY*0.3 + (my-s.Y)*4 - 40 - rand.Float64()*40,
+			ang: math.Atan2(b.Y-a.Y, b.X-a.X), spin: (rand.Float64() - 0.5) * 8,
+			length: math.Hypot(b.X-a.X, b.Y-a.Y),
+			life:   2.5, maxLife: 2.5,
+			grav: sim.Gravity, col: colShip,
+		})
+	}
+	for range 8 {
 		a := rand.Float64() * 2 * math.Pi
-		speed := 30 + rand.Float64()*80
-		life := 1.2 + rand.Float64()*0.6
+		speed := 40 + rand.Float64()*90
+		life := 1.4 + rand.Float64()*0.8
 		out = append(out, particle{
 			x: s.X, y: s.Y,
-			vx: math.Cos(a) * speed, vy: math.Sin(a) * speed,
-			ang: rand.Float64() * 2 * math.Pi, spin: (rand.Float64() - 0.5) * 12,
-			length: 5 + rand.Float64()*7,
+			vx: s.VX*0.3 + math.Cos(a)*speed, vy: s.VY*0.3 + math.Sin(a)*speed,
+			ang: rand.Float64() * 2 * math.Pi, spin: (rand.Float64() - 0.5) * 14,
+			length: 3 + rand.Float64()*4,
 			life:   life, maxLife: life,
-			grav: 40,
-			col:  colTerrain,
+			grav: sim.Gravity, col: colTerrain,
+		})
+	}
+	for range 14 {
+		a := rand.Float64() * 2 * math.Pi
+		speed := 120 + rand.Float64()*160
+		life := 0.2 + rand.Float64()*0.25
+		vx, vy := math.Cos(a)*speed, math.Sin(a)*speed
+		out = append(out, particle{
+			x: s.X, y: s.Y, vx: vx, vy: vy,
+			ang: math.Atan2(vy, vx), length: 4,
+			life: life, maxLife: life,
+			col: colGem,
 		})
 	}
 	return out
