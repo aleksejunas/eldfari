@@ -20,11 +20,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Decisions
 
-- `sim/` has no Ebitengine import: game logic is testable without a window.
-- One folder per mode in `levels/`, no mode field in the JSON.
 - Cargo: hook within 120 px with a winch, mass 0.4, springy rope (the first
   version was unplayable).
-- Old Norse level names; losing best times on a rename is fine.
 - Duel and race: each player a World sharing the Level, `sim.Player` shared
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
