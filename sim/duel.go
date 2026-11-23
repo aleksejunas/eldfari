@@ -44,6 +44,10 @@ type Player struct {
 	Respawn float64 // seconds until the ship spawns again; 0 while alive
 	reload  float64
 	bombIn  float64 // seconds until the next bomb
+
+	safe    Pt   // race: the last place the ship flew with room around it
+	hasSafe bool // false until the ship has flown somewhere safe
+	waiting bool // race: hangs still after starting again, until any input
 }
 
 type Bomb struct {
@@ -88,6 +92,7 @@ func (p *Player) spawn() {
 	p.Reset()
 	p.Ship.X, p.Ship.Y = (pad.X0+pad.X1)/2, pad.Y-ShipRear-0.5
 	p.Health, p.Respawn, p.reload, p.bombIn = 1, 0, 0, 0
+	p.hasSafe, p.waiting = false, false
 }
 
 // Alive reports whether the player's ship is in the game (not waiting to

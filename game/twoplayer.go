@@ -140,6 +140,9 @@ func (g *Game) drawPlayerHUD(dst *ebiten.Image, i int) {
 		g.print(dst, keys[1], W-margin, H-margin-sizeSmall, small, text.AlignEnd, colDim)
 	}
 
+	if p.Waiting() {
+		g.print(dst, "thrust or turn to go on", W/2, H*0.3, g.face(fontTitle, sizeText), text.AlignCenter, colDim)
+	}
 	if !p.Alive() && g.winner() < 0 {
 		g.print(dst, fmt.Sprintf("back in %.0f", p.Respawn+0.5), W/2, H*0.3, g.face(fontTitle, sizeText), text.AlignCenter, colDim)
 	}

@@ -28,6 +28,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 - Duel and race: each player a World sharing the Level, `sim.Player` shared
   (no interface yet). Duel: dying gives the other a point. Race: crystals
   are shared, odd count per level so it can't end in a draw.
+- Race crash: start again in the air at the last safe place (80 px room,
+  120 px below), hanging still until input. No free trip home, no penalty.
 - Duel weapons on fingers free while flying: P1 LShift fire, Space bomb;
   P2 RCtrl fire, RAlt bomb. S/↓ shared a finger with thrust.
 - Gamepad: RT thrust, A fire, B bomb (user's choice); turning stays digital

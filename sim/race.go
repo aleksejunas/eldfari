@@ -5,8 +5,19 @@ import "math"
 // Race mode: two players race for the same crystals. A crystal one player
 // takes is gone for both. When all are taken and both have landed, the one
 // with the most crystals wins. pads[0] and pads[1] are the players' start
-// pads; after a crash a player starts there again after RespawnTime. Like
-// Duel, each player has a World of their own sharing the Level.
+// pads. After a crash a player starts again after RespawnTime, in the air at
+// the last safe place it flew through, not on its pad: a crash must not be a
+// free trip home (or a free landing at the end). Like Duel, each player has a
+// World of their own sharing the Level.
+
+// A place is safe to start again from after a crash when it has
+// SafeClearance of free air all around and SafeDrop straight below (the ship
+// falls). The restarted ship hangs still until the player gives any input,
+// so there is time to get going.
+const (
+	SafeClearance = 80.0
+	SafeDrop      = 120.0
+)
 
 // RaceDraw is Race.Winner when both took as many crystals.
 const RaceDraw = 2
@@ -50,6 +61,23 @@ func (r *Race) Left() int {
 	return n
 }
 
+// respawnAtSafe starts the ship again, standing still in the air at its last
+// safe place with the fuel it had, or on its pad if it never flew anywhere
+// safe.
+func (p *Player) respawnAtSafe() {
+	if !p.hasSafe {
+		p.spawn()
+		return
+	}
+	fuel, at := p.Ship.Fuel, p.safe
+	p.Ship = Ship{X: at.X, Y: at.Y, Fuel: fuel, State: Flying}
+	p.Respawn, p.waiting = 0, true
+}
+
+// Waiting reports whether the ship hangs still after starting again, until
+// the player gives any input.
+func (p *Player) Waiting() bool { return p.waiting }
+
 // NearestCrystal returns the crystal nobody has taken that is nearest to
 // player i, or false if all are taken.
 func (r *Race) NearestCrystal(i int) (Pt, bool) {
@@ -73,14 +101,23 @@ func (r *Race) Step(in [2]Input) {
 		p := &r.Players[i]
 		if !p.Alive() {
 			if p.Respawn -= Dt; p.Respawn <= 0 {
-				p.spawn()
+				p.respawnAtSafe()
 			}
 			continue
+		}
+		if p.waiting {
+			if in[i] == (Input{}) {
+				continue // hangs still where it started again
+			}
+			p.waiting = false
 		}
 		p.Step(in[i])
 		if !p.Alive() {
 			p.Respawn = RespawnTime
 			continue
+		}
+		if s := &p.Ship; s.State == Flying && r.Level.hasRoom(s.X, s.Y, SafeClearance) && !r.Level.Solid(s.X, s.Y+SafeDrop) {
+			p.safe, p.hasSafe = Pt{X: s.X, Y: s.Y}, true
 		}
 		for c, pos := range r.Level.Crystals {
 			if r.Taken[c] < 0 && math.Hypot(p.Ship.X-pos.X, p.Ship.Y-pos.Y) <= CrystalRadius {

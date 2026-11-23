@@ -61,6 +61,21 @@ func (l *Level) Solid(x, y float64) bool {
 	return l.mask[i/64]&(1<<(i%64)) != 0
 }
 
+// hasRoom reports whether there is no terrain within r of (x, y), checked at
+// the centre and 8 points around it.
+func (l *Level) hasRoom(x, y, r float64) bool {
+	if l.Solid(x, y) {
+		return false
+	}
+	for i := range 8 {
+		a := float64(i) * math.Pi / 4
+		if l.Solid(x+r*math.Cos(a), y+r*math.Sin(a)) {
+			return false
+		}
+	}
+	return true
+}
+
 // rasterize fills the polygons (even-odd, scanline) into the mask.
 // The pixel centre (x+0.5, y+0.5) decides whether a pixel is solid.
 // The mask has one bit per pixel: a 4000x1600 level is 800 KB instead of

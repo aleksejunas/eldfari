@@ -92,19 +92,43 @@ func TestEqualCrystalsIsADraw(t *testing.T) {
 	}
 }
 
-func TestCrashedRacerStartsAgainOnOwnPad(t *testing.T) {
+func TestCrashedRacerStartsAgainWhereItCrashed(t *testing.T) {
 	r := raceArena()
-	fly(r.Players[1].World, 500, 400, 0, 300, 0) // falling fast onto the floor
+	p := &r.Players[1]
+	fly(p.World, 400, 300, 0, 0, 0) // between the crystals
+	p.Ship.Fuel = 0.4
+	step2(r, 1)     // flies with room around it: a safe place
+	p.Ship.VY = 400 // then dives into the floor
 	step2(r, 30)
-	if r.Players[1].Alive() {
+	if p.Alive() {
 		t.Fatal("the ship should have crashed")
 	}
+	step2(r, int(RespawnTime/Dt)+60) // one more second without input
+	// The last safe place is on the way down, with room below to fall.
+	s := p.Ship
+	if s.State != Flying || s.Y > 500-SafeDrop || s.X != 400 || s.VY != 0 {
+		t.Errorf("%+v: want hanging still in the air above the crash, not on the pad", s)
+	}
+	r.Step([2]Input{{}, {Left: true}}) // any input: gravity takes over
+	if p.Ship.VY <= 0 {
+		t.Error("after the first input the ship should start falling")
+	}
+	if s.Fuel > 0.4 {
+		t.Errorf("fuel %.2f: a crash must not refuel the ship", s.Fuel)
+	}
+	if r.Players[0].Score != 0 || p.Score != 0 {
+		t.Error("a crash takes no crystals")
+	}
+}
+
+func TestCrashWithoutSafePlaceStartsOnPad(t *testing.T) {
+	r := raceArena()
+	p := &r.Players[1]
+	fly(p.World, 500, 485, 0, 300, 0) // too close to the floor to be safe
+	step2(r, 30)
 	step2(r, int(RespawnTime/Dt)+1)
 	pad := r.Level.Pads[1]
-	if s := r.Players[1].Ship; s.State != Landed || s.X != (pad.X0+pad.X1)/2 {
-		t.Errorf("after %v s the ship should stand on its own pad: %+v", RespawnTime, s)
-	}
-	if r.Players[0].Score != 0 {
-		t.Error("a crash gives no crystals to the other player")
+	if s := p.Ship; s.State != Landed || s.X != (pad.X0+pad.X1)/2 {
+		t.Errorf("%+v: never flew anywhere safe, so it should start on its pad", s)
 	}
 }
