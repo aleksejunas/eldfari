@@ -142,3 +142,30 @@ func TestRacersCrashIntoEachOther(t *testing.T) {
 		t.Error("both racers should crash when they fly into each other")
 	}
 }
+
+func TestRaceShieldTakesOneCrash(t *testing.T) {
+	r := raceArena()
+	p := &r.Players[1]
+	p.ShieldLeft = PowerUpTime
+	fly(p.World, 400, 470, 0, 300, 0) // diving into the floor
+	step2(r, 10)
+	if !p.Alive() || p.ShieldLeft != 0 || p.Ship.VY >= 0 {
+		t.Fatalf("alive %v, shield %.1f, VY %.0f: the shield should take the crash and bounce the ship up",
+			p.Alive(), p.ShieldLeft, p.Ship.VY)
+	}
+	p.Ship.VY = 300 // dive again, now without a shield
+	step2(r, 30)
+	if p.Alive() {
+		t.Error("the shield is used up: the second crash should destroy the ship")
+	}
+}
+
+func TestRaceHasOnlyShields(t *testing.T) {
+	r := raceArena()
+	for range 20 {
+		r.place(r.Level)
+		if r.PowerUp.Kind != Shield {
+			t.Fatalf("a race power-up was %v, want only shields", r.PowerUp.Kind)
+		}
+	}
+}

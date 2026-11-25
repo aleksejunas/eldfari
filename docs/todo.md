@@ -129,7 +129,8 @@ Duel mode first (playable), then a race mode.
 - [x] Bombs: drop with the ship's speed, fall, blast radius 45 px, two
       hits destroy; weapons on fingers that are free while flying
 - [x] Power-ups: shield and one-shot, rare and random (one at a time,
-      every 20–35 s, stay 15 s, last 10 s); `sim/powerup.go`
+      every 20–35 s, stay 15 s, last 10 s); `sim/powerup.go`. In a race:
+      shields only, taking one crash (the ship bounces off)
 - [ ] Play-test the duel; tune `sim/duel.go` (bullet speed, damage, reload)
 - [x] Race mode: both race for the same crystals (one taken is gone for
       both); when all are taken and both have landed, most crystals wins.

@@ -138,15 +138,15 @@ func (g *Game) drawPlayerHUD(dst *ebiten.Image, i int) {
 			col = colTerrain
 		}
 		bar(margin+20, "HEALTH", p.Health, col)
-		power := ""
-		switch {
-		case p.ShieldLeft > 0:
-			power = fmt.Sprintf("SHIELD %.0f", p.ShieldLeft+0.5)
-		case p.OneShotLeft > 0:
-			power = fmt.Sprintf("ONE-SHOT %.0f", p.OneShotLeft+0.5)
-		}
-		g.print(dst, power, x+labelW, margin+40, small, text.AlignStart, colGem)
 	}
+	power := ""
+	switch {
+	case p.ShieldLeft > 0:
+		power = fmt.Sprintf("SHIELD %.0f", p.ShieldLeft+0.5)
+	case p.OneShotLeft > 0:
+		power = fmt.Sprintf("ONE-SHOT %.0f", p.OneShotLeft+0.5)
+	}
+	g.print(dst, power, x+labelW, margin+40, small, text.AlignStart, colGem)
 
 	keys := [2]string{"A/D turn  ·  W thrust", "← → turn  ·  ↑ thrust"}
 	if g.duel != nil {
@@ -260,4 +260,15 @@ func drawPowerUp(ln func(x0, y0, x1, y1, w float64, c color.RGBA), pu *sim.Power
 			ln(pu.X-dx, pu.Y-dy, pu.X+dx, pu.Y+dy, 2, colTerrain)
 		}
 	}
+}
+
+// powerUp returns the power-up that is out in a duel or race, or nil.
+func (g *Game) powerUp() *sim.PowerUp {
+	switch {
+	case g.duel != nil:
+		return g.duel.PowerUp
+	case g.race != nil:
+		return g.race.PowerUp
+	}
+	return nil
 }

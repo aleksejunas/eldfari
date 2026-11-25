@@ -35,7 +35,8 @@ repair.
 
 Now and then a power-up appears somewhere in a duel, for 15 s: a shield
 (no damage from shots or bombs) or a one-shot (every hit destroys). Fly
-through it; it lasts 10 s, or until you die.
+through it; it lasts 10 s, or until you die. In a race, shields appear the
+same way: a shield takes one crash, and you bounce off instead.
 
 Race mode: two players, the same keys without firing, race for the same
 crystals. When all are taken and both have landed, most crystals wins.

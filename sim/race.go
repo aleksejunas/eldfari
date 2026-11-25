@@ -23,18 +23,20 @@ const (
 const RaceDraw = 2
 
 type Race struct {
-	Level   *Level
-	Players [2]Player // Score is the number of crystals taken
-	Taken   []int     // per crystal: -1, or the player who took it
-	Winner  int       // -1 while racing, then 0, 1 or RaceDraw
+	Level    *Level
+	powerUps           // shields only (see powerup.go)
+	Players  [2]Player // Score is the number of crystals taken
+	Taken    []int     // per crystal: -1, or the player who took it
+	Winner   int       // -1 while racing, then 0, 1 or RaceDraw
 }
 
 func NewRace(l *Level) *Race {
-	r := &Race{Level: l}
+	r := &Race{Level: l, powerUps: powerUps{kinds: []PowerUpKind{Shield}}}
 	for i := range r.Players {
 		r.Players[i] = Player{World: NewWorld(l), Base: i}
 	}
 	r.Reset()
+	r.SetSeed(1)
 	return r
 }
 
@@ -48,6 +50,7 @@ func (r *Race) Reset() {
 		r.Taken[i] = -1
 	}
 	r.Winner = -1
+	r.reset() // power-ups
 }
 
 // Left is the number of crystals nobody has taken yet.
@@ -72,6 +75,15 @@ func (p *Player) respawnAtSafe() {
 	fuel, at := p.Ship.Fuel, p.safe
 	p.Ship = Ship{X: at.X, Y: at.Y, Fuel: fuel, State: Flying}
 	p.Respawn, p.waiting = 0, true
+}
+
+// bounce undoes a crash for a shielded ship: back to where it was before the
+// step, flying back the way it came at half speed. The shield is used up.
+func (p *Player) bounce(before Ship) {
+	p.Ship = before
+	p.Ship.VX, p.Ship.VY = -before.VX*0.5, -before.VY*0.5
+	p.Ship.State = Flying
+	p.ShieldLeft = 0
 }
 
 // Waiting reports whether the ship hangs still after starting again, until
@@ -114,7 +126,11 @@ func (r *Race) Step(in [2]Input) {
 			}
 			p.waiting = false
 		}
+		before := p.Ship
 		p.Step(in[i])
+		if !p.Alive() && p.ShieldLeft > 0 {
+			p.bounce(before) // the shield takes the crash
+		}
 		if !p.Alive() {
 			p.Respawn = RespawnTime
 			continue
@@ -131,10 +147,20 @@ func (r *Race) Step(in [2]Input) {
 	}
 
 	if shipsCollide(&r.Players) {
+		a, b := r.Players[0].Ship, r.Players[1].Ship
 		for i := range r.Players {
-			r.Players[i].wreck()
+			p := &r.Players[i]
+			if p.ShieldLeft > 0 {
+				// The shield takes the hit: push away from the other ship.
+				other := [2]Ship{b, a}[i]
+				p.Ship.VX, p.Ship.VY = (p.Ship.X-other.X)*6, (p.Ship.Y-other.Y)*6
+				p.ShieldLeft = 0
+			} else {
+				p.wreck()
+			}
 		}
 	}
+	r.step(r.Level, &r.Players) // power-ups
 
 	a, b := &r.Players[0], &r.Players[1]
 	if r.Left() == 0 && a.Ship.State == Landed && b.Ship.State == Landed {

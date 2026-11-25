@@ -117,6 +117,7 @@ func (g *Game) setLevel(i int) {
 		g.world = g.duel.Players[0].World
 	case sim.ModeRace:
 		g.race = sim.NewRace(ls[g.lvl])
+		g.race.SetSeed(uint64(time.Now().UnixNano()))
 		g.world = g.race.Players[0].World
 	default:
 		g.world = sim.NewWorld(ls[g.lvl])
@@ -289,7 +290,7 @@ func (g *Game) drawScene(dst *ebiten.Image, camX, camY float64, me int) {
 				ring(ln, p.Ship.X, p.Ship.Y, 20, 1.5, playerCol[i])
 			}
 		}
-		if pu := g.duel.PowerUp; pu != nil && blinkOn(pu.Life, g.tick) {
+		if pu := g.powerUp(); pu != nil && blinkOn(pu.Life, g.tick) {
 			drawPowerUp(ln, pu, g.tick)
 		}
 	} else {

@@ -4,7 +4,8 @@ Rewrite this file instead of appending. Max ~40 lines.
 
 ## Now
 
-- Nothing in progress. Last done: power-ups in the duel (shield, one-shot).
+- Nothing in progress. Last done: race shields (take one crash); fixed the
+  race crashing on power-up drawing.
   Duel, race and pads are not run by Claude: need play-testing.
 
 ## Next

@@ -1,9 +1,6 @@
 package sim
 
-import (
-	"math"
-	"math/rand/v2"
-)
+import "math"
 
 // Duel mode: two players in the same level shoot each other. Each player has
 // a World of their own for their ship, sharing the Level, so all the ship
@@ -31,17 +28,14 @@ const (
 )
 
 type Duel struct {
-	Level   *Level
-	Players [2]Player
-	Bullets []Bullet
-	Bombs   []Bomb
-	Blasts  []Blast  // recent explosions, for drawing
-	Hits    []Blast  // recent bullet hits, for drawing
-	PowerUp *PowerUp // the power-up that is out, or nil (see powerup.go)
-
-	rng         *rand.Rand
-	nextPowerUp float64 // seconds until the next power-up appears
-	Winner      int     // -1 until a player reaches DuelScore
+	Level    *Level
+	Players  [2]Player
+	Bullets  []Bullet
+	Bombs    []Bomb
+	Blasts   []Blast // recent explosions, for drawing
+	Hits     []Blast // recent bullet hits, for drawing
+	powerUps         // shield and one-shot (see powerup.go)
+	Winner   int     // -1 until a player reaches DuelScore
 }
 
 type Player struct {
@@ -79,7 +73,7 @@ type Bullet struct {
 }
 
 func NewDuel(l *Level) *Duel {
-	d := &Duel{Level: l}
+	d := &Duel{Level: l, powerUps: powerUps{kinds: []PowerUpKind{Shield, OneShot}}}
 	for i := range d.Players {
 		d.Players[i] = Player{World: NewWorld(l), Base: i}
 	}
@@ -96,10 +90,8 @@ func (d *Duel) Reset() {
 		p.spawn()
 	}
 	d.Bullets, d.Bombs, d.Blasts, d.Hits = nil, nil, nil, nil
-	d.PowerUp, d.Winner = nil, -1
-	if d.rng != nil {
-		d.nextPowerUp = d.powerUpWait()
-	}
+	d.Winner = -1
+	d.reset() // power-ups
 }
 
 func (p *Player) spawn() {
@@ -155,7 +147,7 @@ func (d *Duel) Step(in [2]Input) {
 	}
 	d.moveBullets()
 	d.moveBombs()
-	d.stepPowerUps()
+	d.step(d.Level, &d.Players) // power-ups
 }
 
 func (d *Duel) fire(i int) {
