@@ -169,3 +169,16 @@ func TestRaceHasOnlyShields(t *testing.T) {
 		}
 	}
 }
+
+func TestRespawnWithEmptyTankGetsSomeFuel(t *testing.T) {
+	r := raceArena()
+	p := &r.Players[1]
+	fly(p.World, 400, 300, 0, 0, 0)
+	step2(r, 1) // a safe place
+	p.Ship.Fuel, p.Ship.VY = 0, 400
+	step2(r, 30)
+	step2(r, int(RespawnTime/Dt)+1)
+	if p.Ship.Fuel != RespawnFuel {
+		t.Errorf("fuel %.2f after starting again with an empty tank, want %v", p.Ship.Fuel, RespawnFuel)
+	}
+}

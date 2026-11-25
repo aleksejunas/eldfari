@@ -17,6 +17,11 @@ import "math"
 const (
 	SafeClearance = 80.0
 	SafeDrop      = 120.0
+
+	// RespawnFuel is the least fuel a ship starts again with after a crash:
+	// with an empty tank it would fall and crash again at once. Enough to
+	// fly on and land, too little to make crashing a way to refuel.
+	RespawnFuel = 0.3
 )
 
 // RaceDraw is Race.Winner when both took as many crystals.
@@ -65,14 +70,14 @@ func (r *Race) Left() int {
 }
 
 // respawnAtSafe starts the ship again, standing still in the air at its last
-// safe place with the fuel it had, or on its pad if it never flew anywhere
-// safe.
+// safe place with the fuel it had (at least RespawnFuel), or on its pad if it
+// never flew anywhere safe.
 func (p *Player) respawnAtSafe() {
 	if !p.hasSafe {
 		p.spawn()
 		return
 	}
-	fuel, at := p.Ship.Fuel, p.safe
+	fuel, at := max(p.Ship.Fuel, RespawnFuel), p.safe
 	p.Ship = Ship{X: at.X, Y: at.Y, Fuel: fuel, State: Flying}
 	p.Respawn, p.waiting = 0, true
 }
