@@ -8,18 +8,20 @@
   <style>
     html, body { margin: 0; height: 100%; background: #2b2626; color: #dcd7d2;
                  font-family: system-ui, sans-serif; }
-    #intro { position: absolute; inset: 0; display: grid; place-items: center;
+    /* Scrolls when the card is taller than the window, so Play is always reachable. */
+    #intro { position: fixed; inset: 0; overflow-y: auto; display: flex;
              padding: 16px; box-sizing: border-box; }
-    .card { max-width: 440px; line-height: 1.5; }
+    .card { max-width: 480px; margin: auto; line-height: 1.5; }
     h1 { margin: 0 0 4px; font-size: 2.2rem; letter-spacing: 0.08em; }
     .tagline { margin: 0 0 20px; color: #8c827c; }
     h2 { margin: 20px 0 6px; font-size: 0.8rem; letter-spacing: 0.1em;
          text-transform: uppercase; color: #8c827c; }
+    h3 { margin: 12px 0 4px; font-size: 0.85rem; font-weight: 600; color: #8c827c; }
     p { margin: 0 0 8px; }
-    ul { margin: 0; padding: 0; list-style: none; }
-    li { display: flex; gap: 12px; }
-    kbd { display: inline-block; min-width: 9.5em; color: #f5d68a;
-          font-family: ui-monospace, monospace; }
+    /* Each row: the keys on the left, what they do on the right. */
+    .keys { display: grid; grid-template-columns: 11em 1fr; gap: 2px 12px; margin: 0; }
+    .keys dt { color: #f5d68a; font-family: ui-monospace, monospace; }
+    .keys dd { margin: 0; }
     .note { font-size: 0.85rem; color: #8c827c; }
     button { margin-top: 24px; padding: 10px 28px; font: inherit; font-weight: 600;
              color: #2b2626; background: #e8a85a; border: 0; border-radius: 6px;
@@ -31,7 +33,7 @@
   <div id="intro">
     <div class="card">
       <h1>eldfari</h1>
-      <p class="tagline">A gravity cave flyer. Needs a keyboard.</p>
+      <p class="tagline">A gravity cave flyer. Keyboard or gamepad.</p>
 
       <h2>Goal</h2>
       <p>Fly through the cave and collect every crystal. Then land gently back
@@ -42,20 +44,30 @@
         The yellow arrow points to the nearest crystal, the orange one to a pad.</p>
 
       <h2>Keys</h2>
-      <ul>
-        <li><kbd>A / D or ← →</kbd> turn</li>
-        <li><kbd>W, ↑ or Space</kbd> thrust</li>
-        <li><kbd>R</kbd> restart</li>
-        <li><kbd>N / P</kbd> next / previous level</li>
-        <li><kbd>Z</kbd> zoom</li>
-        <li><kbd>M</kbd> or <kbd>Esc</kbd> menu: choose mode and level</li>
-        <li>Duel and race (two players): <kbd>A D W</kbd> and
-          <kbd>← → ↑</kbd>; in a duel left <kbd>Shift</kbd> / right <kbd>Ctrl</kbd> fire,
-          <kbd>Space</kbd> / right <kbd>Alt</kbd> drop a bomb</li>
-        <li><kbd>F</kbd> fullscreen</li>
-        <li>Gamepad: stick turn, RT/R2 thrust, A/× fire, B/○ bomb,
-          Start menu</li>
-      </ul>
+      <h3>One player</h3>
+      <dl class="keys">
+        <dt>A / D or ← →</dt><dd>turn</dd>
+        <dt>W, ↑ or Space</dt><dd>thrust</dd>
+        <dt>R</dt><dd>restart</dd>
+        <dt>N / P</dt><dd>next / previous level</dd>
+        <dt>Z</dt><dd>zoom</dd>
+        <dt>M or Esc</dt><dd>menu: choose mode and level</dd>
+        <dt>F</dt><dd>fullscreen</dd>
+      </dl>
+      <h3>Two players (duel and race)</h3>
+      <dl class="keys">
+        <dt>A / D, W</dt><dd>player 1: turn, thrust</dd>
+        <dt>Shift (left), Space</dt><dd>player 1: fire, bomb (duel)</dd>
+        <dt>← / →, ↑</dt><dd>player 2: turn, thrust</dd>
+        <dt>Ctrl, Alt (right)</dt><dd>player 2: fire, bomb (duel)</dd>
+      </dl>
+      <h3>Gamepad (one per player)</h3>
+      <dl class="keys">
+        <dt>stick or d-pad</dt><dd>turn</dd>
+        <dt>RT / R2</dt><dd>thrust</dd>
+        <dt>A / ×, B / ○</dt><dd>fire, bomb</dd>
+        <dt>Start</dt><dd>menu</dd>
+      </dl>
 
       <h2>Tips</h2>
       <p class="note">Your best times are saved in this browser. If some keys do
